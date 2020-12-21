@@ -2,13 +2,13 @@ organization := "com.phasmidsoftware"
 
 name := "DecisionTree"
 
-version := "1.0.2"
+version := "1.0.4"
 
-scalaVersion := "2.12.9"
+scalaVersion := "2.13.4"
 
-val scalaTestVersion = "3.0.5"
+val scalaTestVersion = "3.1.1"
 
-resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",

@@ -1,6 +1,6 @@
 package com.phasmidsoftware.decisiontree.tree
 
-import scala.collection.immutable.{Queue, Stack}
+import scala.collection.immutable.Queue
 
 /**
  * Type class to define a visitor for the nodes of a Tree.
