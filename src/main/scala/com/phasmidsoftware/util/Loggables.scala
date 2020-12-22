@@ -24,7 +24,10 @@ trait Loggables {
     ts match {
       case Nil => "[]"
       case h :: Nil => s"[${tl.toLog(h)}]"
-      case h :: tail => s"[${tl.toLog(h)}, ... (${math.max(tail.size - 1, 0)}), ... ${tl.toLog(tail.last)}]"
+      case h :: tail =>
+        val remainder = tail.size - 1
+        val meat = if (remainder > 0) s"... ($remainder elements), ... " else ""
+        s"[${tl.toLog(h)}, $meat${tl.toLog(tail.last)}]"
     }
   }
 

@@ -4,16 +4,14 @@
 
 package com.phasmidsoftware.util
 
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.matchers.should
+import org.scalatest.{BeforeAndAfterEach, flatspec}
 
-class SmartValueOpsSpec extends FlatSpec with Matchers with BeforeAndAfterEach {
+class SmartValueOpsSpec extends flatspec.AnyFlatSpec with should.Matchers with BeforeAndAfterEach {
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     SmartValueOps.setEnabledInvariants(true)
     SmartValueOps.setEnabledConsole(true)
-  }
-
-  override def afterEach() {
   }
 
   import SmartValueOps._

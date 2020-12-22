@@ -1,16 +1,8 @@
 package com.phasmidsoftware.util
 
-import org.scalatest.{BeforeAndAfterEach, FlatSpec}
+import org.scalatest.{BeforeAndAfterEach, flatspec}
 
-class LazyLoggerSpec extends FlatSpec with BeforeAndAfterEach {
-
-  override def beforeEach() {
-
-  }
-
-  override def afterEach() {
-
-  }
+class LazyLoggerSpec extends flatspec.AnyFlatSpec with BeforeAndAfterEach {
 
   behavior of "LazyLoggerSpec"
 

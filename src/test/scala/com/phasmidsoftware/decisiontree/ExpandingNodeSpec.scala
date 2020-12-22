@@ -7,10 +7,11 @@ package com.phasmidsoftware.decisiontree
 import java.util.regex.Pattern
 
 import com.phasmidsoftware.util.Show
-import org.scalatest.{FlatSpec, Matchers, PrivateMethodTester}
+import org.scalatest.matchers.should
+import org.scalatest.{PrivateMethodTester, flatspec}
 
 //noinspection ScalaStyle
-class ExpandingNodeSpec extends FlatSpec with Matchers with PrivateMethodTester {
+class ExpandingNodeSpec extends flatspec.AnyFlatSpec with should.Matchers with PrivateMethodTester {
 
 
   behavior of "expand"

@@ -1,7 +1,8 @@
 package com.phasmidsoftware.decisiontree
 
 import com.phasmidsoftware.util.{Loggable, Show}
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.matchers.should
+import org.scalatest.{BeforeAndAfterEach, flatspec}
 
 case class State(x: Int, y: Int)
 
@@ -36,15 +37,7 @@ object State {
 
 }
 
-class TreeSpec extends FlatSpec with BeforeAndAfterEach with Matchers {
-
-  override def beforeEach() {
-
-  }
-
-  override def afterEach() {
-
-  }
+class TreeSpec extends flatspec.AnyFlatSpec with BeforeAndAfterEach with should.Matchers {
 
   behavior of "TreeSpec"
 

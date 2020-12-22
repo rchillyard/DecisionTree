@@ -1,7 +1,7 @@
 package com.phasmidsoftware.tree
 
 import com.phasmidsoftware.decisiontree.tree.{LazyTree, Tree}
-import com.phasmidsoftware.util.{Flog, LogFunction, Loggable}
+import com.phasmidsoftware.util.{Flog, LogFunction, Loggable, Loggables}
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
 
@@ -147,16 +147,17 @@ class TreeSpec extends flatspec.AnyFlatSpec with should.Matchers {
   }
   it should "work for lazy nodes" in {
     val sb = new StringBuilder
+    val loggables = new Loggables {}
     val generatorFunction: Int => Seq[Int] = t => {
       import Flog._
       import com.phasmidsoftware.util.Loggable._
-      implicit val logFunc: LogFunction = LogFunction(sb.append)
-      implicit val z: Loggable[Seq[Int]] = loggableSeq[Int]
-      Flogger(getString)(logFunc) !! Seq(t * 2 + 1, t * 2 + 3)
+      implicit val logFunc: LogFunction = LogFunction(s => sb.append(s).append("\n"))
+      implicit val loggableSeqInt: Loggable[List[Int]] = loggables.listLoggable[Int]
+      Flogger(getString)(logFunc) !! List(t * 2 + 1, t * 2 + 3)
     }
     val target = LazyTree[Int](1)(generatorFunction)
     Tree.TreeOps(target).targetedBFS(x => x > 100 || x % 2 == 0) shouldBe Some(125)
-    println(sb)
+    sb.toString() shouldBe "log: Hello: [3, 5]\nlog: Hello: [11, 13]\nlog: Hello: [27, 29]\nlog: Hello: [59, 61]\nlog: Hello: [123, 125]\n"
   }
 
   behavior of "map"

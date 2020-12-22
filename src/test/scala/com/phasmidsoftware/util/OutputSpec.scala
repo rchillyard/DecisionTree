@@ -6,9 +6,10 @@ package com.phasmidsoftware.util
 
 import java.io.Writer
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec
+import org.scalatest.matchers.should
 
-class OutputSpec extends FlatSpec with Matchers {
+class OutputSpec extends flatspec.AnyFlatSpec with should.Matchers {
 
   behavior of "trait Output"
 

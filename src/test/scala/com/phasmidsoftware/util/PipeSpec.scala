@@ -6,18 +6,17 @@ package com.phasmidsoftware.util
 
 import java.io.OutputStream
 
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.matchers.should
+import org.scalatest.{BeforeAndAfterEach, flatspec}
 
-class PipeSpec extends FlatSpec with Matchers with BeforeAndAfterEach {
+class PipeSpec extends flatspec.AnyFlatSpec with should.Matchers with BeforeAndAfterEach {
 
   implicit val logger: MockLogger = MockLogger("PipeSpec", "Warn")
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     logger.clear()
   }
 
-  override def afterEach() {
-  }
 
   behavior of "Pipe"
 
