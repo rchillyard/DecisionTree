@@ -46,7 +46,7 @@ trait Loggables {
    * @return a Loggable[ Map[K, T] ]
    */
   def mapLoggable[K, T: Loggable](bookends: String = "{}"): Loggable[Map[K, T]] = (tKm: Map[K, T]) => {
-    def z(k: K, t: T): String = k + ":" + implicitly[Loggable[T]].toLog(t)
+    def z(k: K, t: T): String = k.toString + ":" + implicitly[Loggable[T]].toLog(t)
 
     tKm.map((z _).tupled).mkString(bookends.substring(0, 1), ",", bookends.substring(1, 2))
   }
