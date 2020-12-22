@@ -88,4 +88,5 @@ object Loggable {
 
   implicit object LoggableUnit extends LoggableUnit
 
+  def loggableSeq[X: Loggable]: Loggable[Seq[X]] = (xs: Seq[X]) => xs.foldLeft("")((w, x) => w + ", " + implicitly[Loggable[X]].toLog(x) + " ")
 }

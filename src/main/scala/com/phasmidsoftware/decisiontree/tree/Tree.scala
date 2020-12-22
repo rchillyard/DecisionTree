@@ -5,6 +5,7 @@ import com.phasmidsoftware.decisiontree.tree.Visitor.QueueVisitor
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
+import scala.collection.mutable
 
 trait Monadic[T] {
   def map[U](f: T => U): Monadic[U]
@@ -23,7 +24,7 @@ trait Node[T] extends Monadic[T] {
   /**
    * The children of this Node.
    */
-  val children: Seq[Node[T]]
+  def children: Seq[Node[T]]
 
   /**
    * A method to filter this Node, based on its key.
@@ -41,7 +42,14 @@ trait Node[T] extends Monadic[T] {
    */
   def map[U](f: T => U): Node[U] = new TreeOps(this).doMap(f)
 
-//  override def flatMap[U](f: T => Monadic[U]): Node[U] = new TreeOps(this).doFlatMap(f)
+  /**
+   * Method to compare Nodes, given evidence of Ordering[T]
+   *
+   * @param other    the Node to be compared with.
+   * @param ordering (implicit) the Ordering[T].
+   * @return an Int.
+   */
+  def compare(other: Node[T])(implicit ordering: Ordering[T]): Int = ordering.compare(this.key, other.key)
 }
 
 object Node {
@@ -65,6 +73,26 @@ object Node {
   def leaf[T](t: T): Node[T] = apply(t, Nil)
 }
 
+trait LazyNode[T] extends Node[T] {
+  /**
+   * Generator function.
+   */
+  val f: T => Seq[T]
+
+  /**
+   * Unit method to construct a new LazyMode based on t.
+   *
+   * @param t the t value with which to create a new lazyNode.
+   * @return a LazyNode based on t.
+   */
+  def unit(t: T): LazyNode[T]
+
+  /**
+   * The children of this Node.
+   */
+  def children: Seq[Node[T]] = f(key).map(unit)
+}
+
 /**
  * Case class to define a Tree[T] which extends Node[T].
  *
@@ -73,6 +101,17 @@ object Node {
  * @tparam T the underlying type of the key.
  */
 case class Tree[T](key: T, children: Seq[Node[T]] = Nil) extends Node[T]
+
+case class LazyTree[T](key: T)(val f: T => Seq[T]) extends LazyNode[T] {
+
+  /**
+   * Unit method to construct a new LazyMode based on t.
+   *
+   * @param t
+   * @return
+   */
+  override def unit(t: T): LazyNode[T] = LazyTree(t)(f)
+}
 
 object Tree {
 
@@ -120,8 +159,20 @@ object Tree {
      */
     def bfs(p: T => Boolean = always): Iterable[T] = bfsQueue(p, node)
 
+    /**
+     * Method to get the first node which satisfies the given predicate.
+     * As in normal BFS, the children of a node are placed into a queue.
+     * In this case, the queue is a priority queue, such that the first element to be taken from the queue
+     * is the one that is the "largest" according to ordering.
+     *
+     * @param p        a predicate that determines when the target condition has been reached.
+     * @param ordering (implicit) an Ordering[T].
+     * @return Option[T]. If Some(t) then t is the first t-value to have satisfied the predicate p; if None, then no node satisfied p.
+     */
+    def targetedBFS(p: T => Boolean)(implicit ordering: Ordering[T]): Option[T] = bfsPriorityQueue(p, node)
+
     def doMap[U](f: T => U): Tree[U] = {
-      def inner( tn: Node[T]): Tree[U] = Tree(f(tn.key), tn.children.map(inner))
+      def inner(tn: Node[T]): Tree[U] = Tree(f(tn.key), tn.children.map(inner))
 
       inner(node)
     }
@@ -161,6 +212,19 @@ object Tree {
   }
 
   private def bfsQueue[T](p: T => Boolean, n: Node[T]): Queue[T] = bfs(Queue.empty[T], p)(Queue(n))(new QueueVisitor[T] {})
+
+  private final def bfsPriorityQueue[T: Ordering, V](p: T => Boolean, n: Node[T]): Option[T] = {
+    implicit val ordering: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => x.compare(y)
+    val pq = mutable.PriorityQueue[Node[T]](n)
+    while (pq.nonEmpty) {
+      val tn = pq.dequeue()
+      if (tn.filter(p))
+        return Some(tn.key)
+      else
+        pq.enqueue(tn.children: _*)
+    }
+    None
+  }
 
   @tailrec
   private final def bfs[T, V](visitor: V, p: T => Boolean)(queue2: Queue[Node[T]])(implicit tVv: Visitor[T, V]): V =
