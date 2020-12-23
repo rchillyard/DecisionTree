@@ -61,7 +61,7 @@ object Node {
    * @tparam T the key type of the nodes.
    * @return a Tree[T].
    */
-  def apply[T](t: T, tns: Seq[Node[T]]): Node[T] = Tree(t, tns)
+  def apply[T](t: T, tns: Seq[Node[T]]): Node[T] = new Tree(t, tns)
 
   /**
    * Factory method to create a leaf node.
@@ -96,24 +96,56 @@ trait LazyNode[T] extends Node[T] {
 /**
  * Case class to define a Tree[T] which extends Node[T].
  *
- * @param key      the key value of the node.
- * @param children the children of the node.
+ * @param t      the key value of the node.
+ * @param nodes the children of the node.
  * @tparam T the underlying type of the key.
  */
-case class Tree[T](key: T, children: Seq[Node[T]] = Nil) extends Node[T]
+class Tree[T](t: T, nodes: Seq[Node[T]] = Nil) extends Node[T] {
+  /**
+   * The key of this Node.
+   */
+  override val key: T = t
 
-case class LazyTree[T](key: T)(val f: T => Seq[T]) extends LazyNode[T] {
+  /**
+   * The children of this Node.
+   */
+  override def children: Seq[Node[T]] = nodes
+
+  private def canEqual(other: Any): Boolean = other.isInstanceOf[Tree[T]]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: Tree[T] =>
+      (that canEqual this) &&
+        key == that.key &&
+        children == that.children
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(key)
+    state.map(_.hashCode()).foldLeft(key.hashCode())((a, b) => 31 * a + b)
+  }
+}
+
+class LazyTree[T](t: T)(val f: T => Seq[T]) extends LazyNode[T] {
 
   /**
    * Unit method to construct a new LazyMode based on t.
    *
-   * @param t
-   * @return
+   * @param t the T value from which to construct the new LazyTree.
+   * @return a new LazyTree based on t.
    */
-  override def unit(t: T): LazyNode[T] = LazyTree(t)(f)
+  override def unit(t: T): LazyNode[T] = new LazyTree(t)(f)
+
+  /**
+   * The key of this Node.
+   */
+  override val key: T = t
 }
 
 object Tree {
+
+  def apply[T](t: T, nodes: Seq[Node[T]] = Nil): Tree[T] = new Tree(t, nodes)
 
   /**
    * Implicit class for performing DFS traverses:
@@ -172,7 +204,7 @@ object Tree {
     def targetedBFS(p: T => Boolean)(implicit ordering: Ordering[T]): Option[T] = bfsPriorityQueue(p, node)
 
     def doMap[U](f: T => U): Tree[U] = {
-      def inner(tn: Node[T]): Tree[U] = Tree(f(tn.key), tn.children.map(inner))
+      def inner(tn: Node[T]): Tree[U] = new Tree(f(tn.key), tn.children.map(inner))
 
       inner(node)
     }
@@ -237,4 +269,8 @@ object Tree {
     }
 
   private val always: Any => Boolean = _ => true
+}
+
+object LazyTree {
+  def apply[T](t: T)(f: T => Seq[T]) = new LazyTree(t)(f)
 }

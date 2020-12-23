@@ -20,7 +20,7 @@ class TreeSpec extends flatspec.AnyFlatSpec with should.Matchers {
     evaluated = false
   }
 
-  def afterEach() {
+  def afterEach(): Unit = {
     Flog.enabled = true // we need to put the (singleton) value of enabled back the way it was.
     evaluated = false
   }
