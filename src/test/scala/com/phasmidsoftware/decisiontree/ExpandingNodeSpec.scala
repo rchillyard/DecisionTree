@@ -64,12 +64,12 @@ class ExpandingNodeSpec extends flatspec.AnyFlatSpec with should.Matchers with P
       def successors(t: String): List[String] = (for (x <- 4 to 1 by -1) yield successor(t, x)).toList
     }
     implicit val goalDrivenString: GoalDriven[String] = new GoalDriven[String] {
-      private val goal = "42"
+      private val myGoal = "42"
 
       def goalAchieved(t: String): Boolean =
-        t endsWith goal
+        t endsWith myGoal
 
-      def goalImpossible(t: String, moves: Int): Boolean = SubStringMatch.substringPrefix(moves, t, goal) > moves
+      def goalImpossible(t: String, moves: Int): Boolean = SubStringMatch.substringPrefix(moves, t, myGoal) > moves
 
       // NOTE: we ignore the standard ordering for String
       override def goalConditional(t: String, s: String)(implicit ev: Ordering[String]): Boolean = t.length < s.length

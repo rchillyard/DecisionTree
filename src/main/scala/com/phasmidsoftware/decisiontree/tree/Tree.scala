@@ -73,26 +73,6 @@ object Node {
   def leaf[T](t: T): Node[T] = apply(t, Nil)
 }
 
-trait LazyNode[T] extends Node[T] {
-  /**
-   * Generator function.
-   */
-  val f: T => Seq[T]
-
-  /**
-   * Unit method to construct a new LazyMode based on t.
-   *
-   * @param t the t value with which to create a new lazyNode.
-   * @return a LazyNode based on t.
-   */
-  def unit(t: T): LazyNode[T]
-
-  /**
-   * The children of this Node.
-   */
-  def children: Seq[Node[T]] = f(key).map(unit)
-}
-
 /**
  * Case class to define a Tree[T] which extends Node[T].
  *
@@ -125,22 +105,6 @@ class Tree[T](t: T, nodes: Seq[Node[T]] = Nil) extends Node[T] {
     val state = Seq(key)
     state.map(_.hashCode()).foldLeft(key.hashCode())((a, b) => 31 * a + b)
   }
-}
-
-class LazyTree[T](t: T)(val f: T => Seq[T]) extends LazyNode[T] {
-
-  /**
-   * Unit method to construct a new LazyMode based on t.
-   *
-   * @param t the T value from which to construct the new LazyTree.
-   * @return a new LazyTree based on t.
-   */
-  override def unit(t: T): LazyNode[T] = new LazyTree(t)(f)
-
-  /**
-   * The key of this Node.
-   */
-  override val key: T = t
 }
 
 object Tree {
@@ -197,11 +161,11 @@ object Tree {
      * In this case, the queue is a priority queue, such that the first element to be taken from the queue
      * is the one that is the "largest" according to ordering.
      *
-     * @param p        a predicate that determines when the target condition has been reached.
      * @param ordering (implicit) an Ordering[T].
+     * @param goal     (implicit) an instance of Goal[T] to determine when and how to stop searching.
      * @return Option[T]. If Some(t) then t is the first t-value to have satisfied the predicate p; if None, then no node satisfied p.
      */
-    def targetedBFS(p: T => Boolean)(implicit ordering: Ordering[T]): Option[T] = bfsPriorityQueue(p, node)
+    def targetedBFS()(implicit ordering: Ordering[T], goal: Goal[T]): Option[T] = bfsPriorityQueue(node)
 
     def doMap[U](f: T => U): Tree[U] = {
       def inner(tn: Node[T]): Tree[U] = new Tree(f(tn.key), tn.children.map(inner))
@@ -245,17 +209,24 @@ object Tree {
 
   private def bfsQueue[T](p: T => Boolean, n: Node[T]): Queue[T] = bfs(Queue.empty[T], p)(Queue(n))(new QueueVisitor[T] {})
 
-  private final def bfsPriorityQueue[T: Ordering, V](p: T => Boolean, n: Node[T]): Option[T] = {
+  private final def bfsPriorityQueue[T: Ordering, V](n: Node[T])(implicit goal: Goal[T]): Option[T] = {
     implicit val ordering: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => x.compare(y)
     val pq = mutable.PriorityQueue[Node[T]](n)
-    while (pq.nonEmpty) {
+    val f = Goal.nodeFunction(goal)
+    // NOTE: we are using a var here and an iteration rather than using recursion.
+    // CONSIDER using recursion
+    var result: Option[T] = None
+    while (pq.nonEmpty && result.isEmpty) {
       val tn = pq.dequeue()
-      if (tn.filter(p))
-        return Some(tn.key)
-      else
-        pq.enqueue(tn.children: _*)
+      f(tn) match {
+        case None =>
+          pq.enqueue(tn.children: _*)
+        case Some(true) =>
+          result = Some(tn.key)
+        case Some(false) =>
+      }
     }
-    None
+    result
   }
 
   @tailrec
@@ -271,6 +242,55 @@ object Tree {
   private val always: Any => Boolean = _ => true
 }
 
-object LazyTree {
-  def apply[T](t: T)(f: T => Seq[T]) = new LazyTree(t)(f)
+/**
+ * Trait to define a Goal.
+ * Extenders of this trait must define a function of type T => Option[Boolean].
+ * If the result is None, that is neutral, suggesting to keep seeking the goal.
+ * If the result is Some(b) then we should stop looking, and take b to signify
+ * whether the goal has been reached or can never be reached.
+ *
+ * @tparam T the underlying type for this goal.
+ */
+trait Goal[T] extends (T => Option[Boolean])
+
+object Goal {
+  /**
+   * Yields a Goal such that goal proving true yields Some(true), else
+   * if reject proves true results in Some(false), otherwise None.
+   *
+   * @param goal   the success function.
+   * @param reject the rejection function.
+   * @tparam T the underlying type to be tested.
+   * @return Option[Boolean]
+   */
+  def goal[T](goal: T => Boolean, reject: T => Boolean): Goal[T] = (t: T) => if (goal(t)) Some(true) else if (reject(t)) Some(false) else None
+
+  /**
+   * Yields a Goal such that goal proving true yields Some(true), otherwise None.
+   *
+   * @param g the success function.
+   * @tparam T the underlying type to be tested.
+   * @return Option[Boolean]
+   */
+  def goal[T](g: T => Boolean): Goal[T] = goal(g, _ => false)
+
+  /**
+   * Method to yield a Goal of NOde[T] from a Goal[T]
+   *
+   * @param goal a Goal[T].
+   * @tparam T the key type.
+   * @return a Goal of Node[T]
+   */
+  def nodeFunction[T](goal: Goal[T]): Goal[Node[T]] = lift[T, Node[T]](goal)(tn => tn.key)
+
+  /**
+   * Method to yield a Goal[U] from a Goal[T] and a lens function.
+   *
+   * @param goal a Goal[T].
+   * @param lens a lens function to extract a T from a U.
+   * @tparam T the underlying type of Goal.
+   * @tparam U the underlying type of the result.
+   * @return a Goal[U]
+   */
+  def lift[T, U](goal: Goal[T])(lens: U => T): Goal[U] = u => goal(lens(u))
 }
