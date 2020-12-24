@@ -1,11 +1,12 @@
 package com.phasmidsoftware.decisiontree.tree
 
 import com.phasmidsoftware.decisiontree.tree.Tree.TreeOps
-import com.phasmidsoftware.decisiontree.tree.Visitor.QueueVisitor
+import com.phasmidsoftware.decisiontree.tree.Visitor.queueVisitor
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 trait Monadic[T] {
   def map[U](f: T => U): Monadic[U]
@@ -161,11 +162,19 @@ object Tree {
      * In this case, the queue is a priority queue, such that the first element to be taken from the queue
      * is the one that is the "largest" according to ordering.
      *
+     * TODO arrange to return a Seq[T] which has the entire path from root up through the successful state.
+     *
      * @param ordering (implicit) an Ordering[T].
      * @param goal     (implicit) an instance of Goal[T] to determine when and how to stop searching.
      * @return Option[T]. If Some(t) then t is the first t-value to have satisfied the predicate p; if None, then no node satisfied p.
      */
-    def targetedBFS()(implicit ordering: Ordering[T], goal: Goal[T]): Option[T] = bfsPriorityQueue(node)
+    def targetedBFS()(implicit ordering: Ordering[T], goal: Goal[T]): Option[T] = {
+      val list: ListBuffer[(T, T)] = ListBuffer[(T, T)]()
+      implicit val visitor: MutatingVisitor[(T, T), ListBuffer[(T, T)]] = MutatingVisitor.appendingListVisitor[(T, T)]
+      bfsPriorityQueue(list, node)
+      // TODO do something with list
+    }
+
 
     def doMap[U](f: T => U): Tree[U] = {
       def inner(tn: Node[T]): Tree[U] = new Tree(f(tn.key), tn.children.map(inner))
@@ -207,9 +216,9 @@ object Tree {
     case _ :: tns => traversePre(visitor, p, tns)
   }
 
-  private def bfsQueue[T](p: T => Boolean, n: Node[T]): Queue[T] = bfs(Queue.empty[T], p)(Queue(n))(new QueueVisitor[T] {})
+  private def bfsQueue[T](p: T => Boolean, n: Node[T]): Queue[T] = bfs(Queue.empty[T], p)(Queue(n))(queueVisitor)
 
-  private final def bfsPriorityQueue[T: Ordering, V](n: Node[T])(implicit goal: Goal[T]): Option[T] = {
+  private final def bfsPriorityQueue[T: Ordering : Goal, V](visitor: V, n: Node[T])(implicit goal: Goal[T], tVv: MutatingVisitor[(T, T), V]): Option[T] = {
     implicit val ordering: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => x.compare(y)
     val pq = mutable.PriorityQueue[Node[T]](n)
     val f = Goal.nodeFunction(goal)
@@ -220,7 +229,9 @@ object Tree {
       val tn = pq.dequeue()
       f(tn) match {
         case None =>
-          pq.enqueue(tn.children: _*)
+          val children: Seq[Node[T]] = tn.children
+          pq.enqueue(children: _*)
+          children.foreach(z => tVv.visit(visitor, z.key -> tn.key))
         case Some(true) =>
           result = Some(tn.key)
         case Some(false) =>
