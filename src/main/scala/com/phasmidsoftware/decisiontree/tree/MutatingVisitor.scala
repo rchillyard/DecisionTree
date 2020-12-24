@@ -34,6 +34,19 @@ object MutatingVisitor {
     }
   }
 
-  implicit def appendingListVisitor[T]: AppendingListVisitor[T] = new AppendingListVisitor[T] {}
+  implicit def appendingListVisitor[T]: MutatingVisitor[T, ListBuffer[T]] = new AppendingListVisitor[T] {}
+
+  /**
+   * This is the equivalent of StackVisitor.
+   *
+   * @tparam T the underlying type.
+   */
+  trait PrependingListVisitor[T] extends MutatingVisitor[T, ListBuffer[T]] {
+    def visit(ts: ListBuffer[T], t: T): Unit = {
+      ts prepend t
+    }
+  }
+
+  implicit def prependingListVisitor[T]: MutatingVisitor[T, ListBuffer[T]] = new PrependingListVisitor[T] {}
 }
 

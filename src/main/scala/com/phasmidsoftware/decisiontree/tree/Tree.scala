@@ -156,6 +156,14 @@ object Tree {
      */
     def bfs(p: T => Boolean = always): Iterable[T] = bfsQueue(p, node)
 
+    @tailrec
+    private def followBack(result: List[T], work: List[(T, T)]): List[T] = work match {
+      case Nil => result
+      case (_, _) :: Nil => result
+      case (_, y) :: (a, b) :: tail if y == a => followBack(result :+ y, (a, b) :: tail)
+      case (x, y) :: (_, _) :: tail => followBack(result, (x, y) :: tail)
+    }
+
     /**
      * Method to get the first node which satisfies the given predicate.
      * As in normal BFS, the children of a node are placed into a queue.
@@ -168,11 +176,14 @@ object Tree {
      * @param goal     (implicit) an instance of Goal[T] to determine when and how to stop searching.
      * @return Option[T]. If Some(t) then t is the first t-value to have satisfied the predicate p; if None, then no node satisfied p.
      */
-    def targetedBFS()(implicit ordering: Ordering[T], goal: Goal[T]): Option[T] = {
+    def targetedBFS()(implicit ordering: Ordering[T], goal: Goal[T]): Seq[T] = {
       val list: ListBuffer[(T, T)] = ListBuffer[(T, T)]()
-      implicit val visitor: MutatingVisitor[(T, T), ListBuffer[(T, T)]] = MutatingVisitor.appendingListVisitor[(T, T)]
-      bfsPriorityQueue(list, node)
-      // TODO do something with list
+      implicit val visitor: MutatingVisitor[(T, T), ListBuffer[(T, T)]] = MutatingVisitor.prependingListVisitor[(T, T)]
+      val to = bfsPriorityQueue(list, node)
+      (to match {
+        case Some(t) => followBack(List(t), list.to(List))
+        case None => Nil
+      }).reverse
     }
 
 
