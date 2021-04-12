@@ -76,6 +76,15 @@ case class Tree[T](key: T, children: Seq[Node[T]] = Nil) extends Node[T]
 
 object Tree {
 
+  /**
+   * Perform a breadth-first search on a Tree[T] with the predicate p.
+   * The order in which children are placed on the queue is smallest-first, according to the ordering of T provided.
+   *
+   * @param node the node at which to start (i.e. the root of the Tree).
+   * @param p a predicate which filters the nodes which we examine (defaults to all).
+   * @tparam T the underlying type of the Tree.
+   * @return a list of Ts in ascending order.
+   */
   def bfsOrdered[T: Ordering](node: Node[T], p: T => Boolean = always): Iterable[T] = {
     val to = implicitly[Ordering[T]]
     implicit val tno: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => to.compare(x.key, y.key)
@@ -126,6 +135,13 @@ object Tree {
      */
     def bfs(p: T => Boolean = always): Iterable[T] = bfsQueue(p, node)
 
+    /**
+     * Map this Tree[T] to the equivalent Tree[U] by transforming the key of each element with the function f.
+     *
+     * @param f a function which takes a T and returns an U.
+     * @tparam U the underlying type of the resulting Tree.
+     * @return a Tree[U].
+     */
     def doMap[U](f: T => U): Tree[U] = {
       def inner( tn: Node[T]): Tree[U] = Tree(f(tn.key), tn.children.map(inner))
 
