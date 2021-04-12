@@ -249,7 +249,7 @@ object Tree {
     case _ :: tns => traversePre(visitor, p, tns)
   }
 
-  private def bfsQueue[T](p: T => Boolean, n: Node[T]): Queue[T] = bfs(Queue.empty[T], p)(Queue(n))(queueVisitor)
+  private def bfsQueue[T](p: T => Boolean, n: Node[T]): Queue[T] = bfs(Queue.empty[T], p)(Queue(n))(new QueueVisitor[T] {})
 
   private final def bfsPriorityQueue[T: Ordering : Goal, V](visitor: V, n: Node[T])(implicit goal: Goal[T], tVv: MutatingVisitor[(T, T), V]): Option[T] = {
     implicit val ordering: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => x.compare(y)
