@@ -1,7 +1,8 @@
 package com.phasmidsoftware.decisiontree.tree
 
 import com.phasmidsoftware.decisiontree.tree.Tree.TreeOps
-
+import com.phasmidsoftware.decisiontree.tree.Visitor.QueueVisitor
+import com.phasmidsoftware.util.PriorityQueue
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
@@ -76,6 +77,21 @@ case class Tree[T](key: T, children: Seq[Node[T]] = Nil) extends Node[T]
 object Tree {
 
   /**
+   * Perform a breadth-first search on a Tree[T] with the predicate p.
+   * The order in which children are placed on the queue is smallest-first, according to the ordering of T provided.
+   *
+   * @param node the node at which to start (i.e. the root of the Tree).
+   * @param p a predicate which filters the nodes which we examine (defaults to all).
+   * @tparam T the underlying type of the Tree.
+   * @return a list of Ts in ascending order.
+   */
+  def bfsOrdered[T: Ordering](node: Node[T], p: T => Boolean = always): Iterable[T] = {
+    val to = implicitly[Ordering[T]]
+    implicit val tno: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => to.compare(x.key, y.key)
+    for (tn <- bfsPriorityQueue(p, node).iterator.to(Iterable)) yield tn.key
+  }
+
+  /**
    * Implicit class for performing DFS traverses:
    * preOrder, inOrder, and postOrder.
    *
@@ -117,28 +133,22 @@ object Tree {
      *
      * @param p a predicate that determines whether a subtree with its value t will be processed at all.
      */
-    def bfs(p: T => Boolean = always): Iterable[T] = bfs(Queue.empty[T], p)(Queue(node))
+    def bfs(p: T => Boolean = always): Iterable[T] = bfsQueue(p, node)
 
+    /**
+     * Map this Tree[T] to the equivalent Tree[U] by transforming the key of each element with the function f.
+     *
+     * @param f a function which takes a T and returns an U.
+     * @tparam U the underlying type of the resulting Tree.
+     * @return a Tree[U].
+     */
     def doMap[U](f: T => U): Tree[U] = {
       def inner( tn: Node[T]): Tree[U] = Tree(f(tn.key), tn.children.map(inner))
 
       inner(node)
     }
 
-//    def doFlatMap[U](f: T => Monadic[U]): Tree[U] = {
-//      def inner( tn: Node[T]): Tree[U] = Tree(f(tn.key).asInstanceOf[Node[T]], tn.children.map(inner))
-//
-//      inner(node)
-//    }
-
     type Item = Either[Node[T], T]
-
-    @tailrec
-    private final def traversePre[V](visitor: V, p: T => Boolean, nodes: Seq[Node[T]])(implicit tVv: Visitor[T, V]): V = nodes match {
-      case Nil => visitor
-      case tn :: tns if tn.filter(p) => traversePre(tVv.visit(visitor, tn.key), p, tn.children ++ tns)
-      case _ :: tns => traversePre(visitor, p, tns)
-    }
 
     private def inOrderFunc[V](ws: Seq[Item], tn: Node[T]) = tn.children match {
       case Nil =>
@@ -162,18 +172,42 @@ object Tree {
           case Right(t) =>
             traverse(tVv.visit(visitor, t), p, f)(ws)
         }
-    }
-
-    @tailrec
-    private final def bfs[V](visitor: V, p: T => Boolean)(queue2: Queue[Node[T]])(implicit tVv: Visitor[T, V]): V =
-      queue2.dequeueOption match {
-        case None => visitor
-        case Some((tn, q)) =>
-          if (tn.filter(p))
-            bfs(tVv.visit(visitor, tn.key), p)(tn.children.foldLeft(q)(_.enqueue(_)))
-          else bfs(visitor, p)(q)
       }
   }
+
+  @tailrec
+  private final def traversePre[T, V](visitor: V, p: T => Boolean, nodes: Seq[Node[T]])(implicit tVv: Visitor[T, V]): V = nodes match {
+    case Nil => visitor
+    case tn :: tns if tn.filter(p) => traversePre(tVv.visit(visitor, tn.key), p, tn.children ++ tns)
+    case _ :: tns => traversePre(visitor, p, tns)
+  }
+
+  private def bfsQueue[T](p: T => Boolean, n: Node[T]): Queue[T] = bfs(Queue.empty[T], p)(Queue(n))(new QueueVisitor[T] {})
+
+  private def bfsPriorityQueue[T: Ordering](p: T => Boolean, n: Node[T]): PriorityQueue[Node[T]] = {
+    implicit val y: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => implicitly[Ordering[T]].compare(x.key, y.key)
+    bfsPQ(PriorityQueue[Node[T]], p)(PriorityQueue(n))
+  }
+
+  @tailrec
+  private final def bfs[T, V](visitor: V, p: T => Boolean)(queue: Queue[Node[T]])(implicit tVv: Visitor[T, V]): V =
+    queue.dequeueOption match {
+      case None => visitor
+      case Some((tn, q)) =>
+        if (tn.filter(p))
+          bfs(tVv.visit(visitor, tn.key), p)(tn.children.foldLeft(q)(_.enqueue(_)))
+        else bfs(visitor, p)(q)
+    }
+
+  @tailrec
+  private final def bfsPQ[T, V](visitor: V, p: T => Boolean)(queue: PriorityQueue[Node[T]])(implicit tVv: Visitor[Node[T], V]): V =
+    queue.delOption match {
+      case None => visitor
+      case Some((q, tn)) =>
+        if (tn.filter(p))
+          bfsPQ(tVv.visit(visitor, tn), p)(tn.children.foldLeft(q)(_.insert(_)))
+        else bfsPQ(visitor, p)(q)
+    }
 
   private val always: Any => Boolean = _ => true
 }
