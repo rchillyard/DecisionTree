@@ -1,6 +1,7 @@
 package com.phasmidsoftware.util
 
-import org.scalatest.{BeforeAndAfterEach, flatspec, matchers}
+import org.scalatest.{BeforeAndAfterEach, flatspec}
+
 
 class LazyLoggerSpec extends flatspec.AnyFlatSpec
 		with matchers.should.Matchers

@@ -2,19 +2,15 @@ organization := "com.phasmidsoftware"
 
 name := "DecisionTree"
 
-version := "1.0.3-SNAPSHOT"
+version := "1.0.5-SNAPSHOT"
 
-scalaVersion := "2.13.3"
-
-scalacOptions += "-deprecation"
+scalaVersion := "2.13.4"
 
 val scalaTestVersion = "3.1.1"
 
-resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
+scalacOptions ++= Seq("-deprecation", "-feature")
 
-libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
-)
+resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
