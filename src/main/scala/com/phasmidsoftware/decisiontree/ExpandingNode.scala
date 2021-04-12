@@ -8,7 +8,14 @@ import com.phasmidsoftware.decisiontree.tree.Goal
 import com.phasmidsoftware.util.{Loggable, Loggables, Show}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.mutable
+/**
+ * This case class is used for the result of expand method of ExpandingNode.
+ *
+ * @param evaluated either Some(expanding node) or: None
+ * @param unevaluated a sequence of unevaluated states.
+ * @tparam T the underlying type of the expansion.
+ */
+case class Expansion[T](evaluated: Option[ExpandingNode[T]], unevaluated: Seq[T])
 
 /**
  *
@@ -73,7 +80,7 @@ abstract class ExpandingNode[T: Expandable : GoalDriven : Ordering : Loggable : 
    *
    * CONSIDER make this tail-recursive
    *
-   * @param _so   the currently satisfied goal.
+   * @param _so   the (optional) currently satisfied goal.
    * @param moves the number of possible moves remaining.
    * @return an Option of ExpandingNode[T]:
    *         None => we have run out of moves
@@ -88,25 +95,57 @@ abstract class ExpandingNode[T: Expandable : GoalDriven : Ordering : Loggable : 
       None
     }
     else te.result(t, _so, moves) match {
-      case Left(b) =>
-        Some(solve(b)) // XXX terminating condition found--mark and return this.
-      case Right(Nil) =>
-        None // XXX situation with no descendants: return None.
-      case Right(ts) =>
-        // XXX normal situation with (possibly empty) descendants?
-        // XXX Recursively expand them, ensuring that the elements are unique.
-        import com.phasmidsoftware.util.SmartValueOps._
-        val verifiedStates = ts.invariant(z => z.distinct.size == z.size)
-        Some(expandSuccessors(verifiedStates, moves - 1, _so))
+        case Left(b) =>
+            Some(solve(b)) // XXX terminating condition found--mark and return this.
+        case Right(Nil) =>
+            None // XXX situation with no descendants: return None.
+        case Right(ts) =>
+            // XXX normal situation with (possibly empty) descendants?
+            // XXX Recursively expand them, ensuring that the elements are unique.
+            import com.phasmidsoftware.util.SmartValueOps._
+            val verifiedStates = ts.invariant(z => z.distinct.size == z.size)
+            Some(expandSuccessors(verifiedStates, moves - 1, _so))
     }
   }
 
-  /**
-   * Method to replace node x with node y in this sub-tree.
-   * Additionally, if y is decided, then we mark the result as decided.
-   *
-   * @param x the node to be replaced.
-   * @param y the node with which to replace the given node.
+    /**
+     * Method to expand a branch of a tree, by taking this ExpandingNode and (potentially) adding child nodes which are themselves recursively expanded.
+     * The algorithm operates in a depth-first-search manner.
+     *
+     * @param _so   the (optional) currently satisfied goal.
+     * @param moves the number of possible moves remaining.
+     * @return an Option of ExpandingNode[T]:
+     *         None => we have run out of moves
+     *         Some(n) => n is either this but marked as solved; or this with expanded children added.
+     */
+    def bfsWithExpand(_so: Option[T], moves: Int): Option[ExpandingNode[T]] = {
+        val te = implicitly[Expandable[T]]
+        if (moves < 0)
+            None
+        else if (te.runaway(t)) {
+            Console.println(s"expand: runaway condition detected for $t")
+            None
+        }
+        else te.result(t, _so, moves) match {
+            case Left(b) =>
+                Some(solve(b)) // XXX terminating condition found--mark and return this.
+            case Right(Nil) =>
+                None // XXX situation with no descendants: return None.
+            case Right(ts) =>
+                // XXX normal situation with (possibly empty) descendants?
+                // XXX expand them, ensuring that the elements are unique.
+                import com.phasmidsoftware.util.SmartValueOps._
+                val verifiedStates: List[T] = ts.invariant(z => z.distinct.size == z.size)
+                Some(expandSuccessors(verifiedStates, moves - 1, _so))
+        }
+    }
+
+    /**
+     * Method to replace node x with node y in this sub-tree.
+     * Additionally, if y is decided, then we mark the result as decided.
+     *
+     * @param x the node to be replaced.
+     * @param y the node with which to replace the given node.
    * @return a copy of this Node, but with x replaced by y.
    */
   override def replace(x: Node[T], y: Node[T]): ExpandingNode[T] = y match {
@@ -188,6 +227,12 @@ abstract class ExpandingNode[T: Expandable : GoalDriven : Ordering : Loggable : 
 
 object ExpandingNode extends Loggables {
 
+  /**
+   * TEST this doesn't seem to be used anywhere.
+   *
+   * @tparam T the underlying type.
+   * @return a Loggable of ExpandingNode[T].
+   */
   def expandingNodeLogger[T: Loggable]: Loggable[ExpandingNode[T]] = (t: ExpandingNode[T]) => {
 
     val wT = implicitly[Loggable[T]].toLog(t.t)
@@ -240,7 +285,7 @@ trait Expandable[T] {
     count += 1
     if (count % 100000 == 0) logger.debug(s"Testing ${count}th state: $sT")
     if (ev1.goalAchieved(t)) {
-      logger.info(s"Goal achieved for state: $sT")
+      logger.debug(s"Goal achieved for state: $sT")
       Left(t)
     }
     else if (ev1.goalOutOfReach(t, to, moves)) {
@@ -271,7 +316,7 @@ trait Expandable[T] {
 object Expandable {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def cache[T]: mutable.HashMap[(T, Option[T], Int), Either[T, List[T]]] = mutable.HashMap[(T, Option[T], Int), Either[T, List[T]]]()
+//  def cache[T]: mutable.HashMap[(T, Option[T], Int), Either[T, List[T]]] = mutable.HashMap[(T, Option[T], Int), Either[T, List[T]]]()
 }
 
 case class ExpandingNodeException(str: String) extends Exception(str)

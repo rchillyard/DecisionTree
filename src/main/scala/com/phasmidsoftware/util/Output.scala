@@ -5,7 +5,6 @@
 package com.phasmidsoftware.util
 
 import java.io._
-
 import scala.collection.mutable
 import scala.language.postfixOps
 

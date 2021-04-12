@@ -39,6 +39,13 @@ object State {
 
 class TreeSpec extends flatspec.AnyFlatSpec with BeforeAndAfterEach with should.Matchers {
 
+  override def beforeEach(): Unit = {
+  }
+
+  override def afterEach(): Unit =  {
+
+  }
+
   behavior of "TreeSpec"
 
   it should "expand" in {
@@ -54,5 +61,4 @@ class TreeSpec extends flatspec.AnyFlatSpec with BeforeAndAfterEach with should.
     val target: Tree[State] = new Tree[State](stateNode)
     target.root.state shouldBe state
   }
-
 }
