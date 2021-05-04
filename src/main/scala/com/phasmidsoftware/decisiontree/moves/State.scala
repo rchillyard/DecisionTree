@@ -36,22 +36,79 @@ trait State[S] {
    * Method to determine the possible moves from the given state.
    *
    * @param s a state.
-   * @return a sequence of Move[S]
+   * @return a sequence of Transition[S]
    */
   def moves(s: S): Seq[Transition[S]]
 }
 
-trait Transition[S] extends (S => S)
-
 /**
- * Move is a domain-specific class which extends Transition by defining a function parameter and a human-legible description.
+ * A function which transitions from a state S to a different state S.
  *
- * @param transition  a transition function which turns one S into another S.
- * @param description a human-readable description for logging purposes.
- * @tparam S type which defines the domain of this Move (must provide implicit evidence of State[T]).
+ * @tparam S the type of the input parameter and of the result.
  */
-case class Move[S: State](transition: S => S, description: String) extends Transition[S] {
-  override def apply(s: S): S = transition(s)
+trait Transition[S] extends (S => S) {
+
+  /**
+   * Method to compose this Move with a Transition g.
+   *
+   * @param g a Transition[S].
+   * @return a Transition[S].
+   */
+  def andThen(g: Transition[S]): Transition[S]
 }
 
-object Move
+/**
+ * A case class which implements Transition[S].
+ *
+ * @param f    a function S => S.
+ * @param desc the human-legible description of f.
+ * @tparam S the type of the input parameter and of the result.
+ */
+case class Move[S](f: S => S, desc: String) extends Transition[S] {
+  /**
+   * Apply this Move to s.
+   *
+   * @param s a state.
+   * @return a new state.
+   */
+  override def apply(s: S): S = f(s)
+
+  override def toString: String = desc
+
+  /**
+   * Composition of the descriptions of this and g.
+   *
+   * @param g a Transition[S] to be applied.
+   * @return a human-legible rendering of f andThen g.
+   */
+  private def composedDesc(g: Transition[S]): String = {
+    if (f == identity[S] _) g.toString
+    else if (g == identity[S] _) desc
+    else s"$g($desc)"
+  }
+
+  /**
+   * Method to compose this Move with a Transition g.
+   *
+   * @param g a Transition[S].
+   * @return a Transition[S].
+   */
+  def andThen(g: Transition[S]): Transition[S] = Move(f andThen g, composedDesc(g))
+}
+
+object Move {
+  def identity[S]: Move[S] = Move(Predef.identity, "")
+}
+
+/**
+ * LazyState is a domain-specific class which extends Transition by defining a function parameter and a human-legible description.
+ *
+ * @param state      the starting state.
+ * @param transition a transition function which turns one S into another S (defaults to identity).
+ * @tparam S type which defines the domain of this LazyState (must provide implicit evidence of State[T]).
+ */
+case class LazyState[S: State](state: S, transition: Transition[S] = Move.identity[S]) extends (() => S) {
+  override def apply(): S = transition(state)
+}
+
+object LazyState

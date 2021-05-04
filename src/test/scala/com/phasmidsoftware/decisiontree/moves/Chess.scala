@@ -8,7 +8,7 @@ package com.phasmidsoftware.decisiontree.moves
 case class Chess(board: String)
 
 object Chess {
-  def checkmate(s: Chess): Boolean = false
+  def checkmate(s: Chess): Boolean = s.board == "checkmate"
 
   trait ChessState extends State[Chess] {
     def isValid(s: Chess): Boolean = true
@@ -17,7 +17,7 @@ object Chess {
 
     def isGoal(s: Chess): Boolean = checkmate(s)
 
-    def moves(s: Chess): Seq[Move[Chess]] = Nil
+    def moves(s: Chess): Seq[Transition[Chess]] = Nil
   }
 
   implicit object ChessState extends ChessState

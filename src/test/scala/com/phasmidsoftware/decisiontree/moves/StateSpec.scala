@@ -7,22 +7,30 @@ class StateSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "Move"
 
-  it should "apply" in {
-    val move: Move[Chess] = Move(identity, "no-move")
-    val start = Chess("")
-    move.apply(start) shouldBe start
+  it should "toString 0" in {
+    val move: Move[Chess] = Move.identity[Chess]
+    move.toString shouldBe ""
   }
 
-  it should "description" in {
-    val move: Move[Chess] = Move(identity, "no-move")
-    move.description shouldBe "no-move"
+  it should "toString PxP" in {
+    val move1: Transition[Chess] = Move.identity[Chess].andThen(Move[Chess](s => Chess(s.board), "PxP"))
+    move1.toString shouldBe "PxP()"
+    val move2: Transition[Chess] = move1.andThen(Move[Chess](s => Chess(s.board), "PxP"))
+    move2.toString shouldBe "PxP(PxP())"
+  }
+
+  behavior of "LazyState"
+
+  it should "apply" in {
+    val start = Chess("")
+    val move: LazyState[Chess] = LazyState(start, Move.identity)
+    move.apply() shouldBe start
   }
 
   behavior of "ChessState"
   it should "work" in {
     val z = implicitly[State[Chess]]
     val chess = Chess("")
-    val checkmate = Chess("checkmate")
     z.isValid(chess) shouldBe true
     z.moves(chess) shouldBe Nil
     z.isGoal(chess) shouldBe false
