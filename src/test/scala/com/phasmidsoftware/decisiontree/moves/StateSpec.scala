@@ -3,7 +3,7 @@ package com.phasmidsoftware.decisiontree.moves
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 
-class MoveSpec extends AnyFlatSpec with should.Matchers {
+class StateSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "Move"
 
@@ -25,7 +25,7 @@ class MoveSpec extends AnyFlatSpec with should.Matchers {
     val checkmate = Chess("checkmate")
     z.isValid(chess) shouldBe true
     z.moves(chess) shouldBe Nil
-    z.isGoal(chess, checkmate) shouldBe false
+    z.isGoal(chess) shouldBe false
     z.heuristic(chess) shouldBe 0
   }
 }

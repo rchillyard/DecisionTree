@@ -1,14 +1,21 @@
 package com.phasmidsoftware.decisiontree.moves
 
+/**
+ * Mock class for testing Moves and States
+ *
+ * @param board a representation of the chess board.
+ */
 case class Chess(board: String)
 
 object Chess {
+  def checkmate(s: Chess): Boolean = false
+
   trait ChessState extends State[Chess] {
     def isValid(s: Chess): Boolean = true
 
     def heuristic(s: Chess): Double = 0
 
-    def isGoal(s: Chess, t: Chess): Boolean = false
+    def isGoal(s: Chess): Boolean = checkmate(s)
 
     def moves(s: Chess): Seq[Move[Chess]] = Nil
   }
