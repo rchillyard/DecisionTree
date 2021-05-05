@@ -33,7 +33,7 @@ class StateSpec extends AnyFlatSpec with should.Matchers {
     val chess = Chess("")
     z.isValid(chess) shouldBe true
     z.moves(chess) shouldBe Nil
-    z.isGoal(chess) shouldBe false
+    z.isGoal(chess) shouldBe None
     z.heuristic(chess) shouldBe 0
   }
 }

@@ -2,7 +2,7 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
-import com.phasmidsoftware.util.DecisionTreeException
+import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
 
 import scala.util.{Failure, Success, Try}
 
@@ -90,7 +90,7 @@ object TicTacToe {
         None
 
     def moves(s: TicTacToe): Seq[Transition[TicTacToe]] = {
-      val zs: Seq[(Int, Int)] = s.open // TODO need to shuffle
+      val zs: Seq[(Int, Int)] = Shuffle(s.open)
       val toPlay = (stride * stride - zs.size) % 2 == 0
       val f: TicTacToe => (Int, Int) => TicTacToe = t => if (toPlay) t.playX else t.play0
       for (z <- zs) yield Move[TicTacToe](x => f(x)(z._1, z._2), z.toString())
