@@ -7,7 +7,6 @@
  */
 package com.phasmidsoftware.util;
 
-import java.io.Serial;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -397,7 +396,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         private final E value;
     }
 
-    @Serial
+    @SuppressWarnings("MissingSerialAnnotation")
     private static final long serialVersionUID = -7720805057305804111L;
 
     private static final int DEFAULT_INITIAL_CAPACITY = 11;
