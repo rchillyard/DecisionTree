@@ -23,7 +23,7 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
    *
    * @return true if there is a line of similar marks in this TicTacToe.
    */
-  lazy val line: Boolean = rowMatch || colMatch || diagMatch
+  lazy val line: Cell = rowMatch orElse colMatch orElse diagMatch
 
   lazy val heuristic: Double = {
     def toInt(b: Boolean): Int = if (b) 1 else 0
@@ -72,7 +72,7 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
    * @param i the column index from 0 thru 2.
    * @return a sequence of Cells.
    */
-  def column(i: Int): Seq[Cell] = for (j <- 0 until stride) yield board(j)(i)
+  def column(i: Int): Seq[Cell] = (for (j <- 0 until stride) yield board(j)(i)).toList
 
   /**
    * Val to determine the list of open cells from this TIcTacToe.
@@ -87,10 +87,11 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
    * @param b the orientation of the diagonal: true: 0,0 thru 2,2 otherwise 2,0 thru 0,2.
    * @return a sequence of Cells.
    */
-  def diagonal(b: Boolean): Seq[Cell] = if (b)
+  def diagonal(b: Boolean): Seq[Cell] = (if (b)
     for (i <- 0 until stride) yield board(i)(i)
   else
     for (i <- 0 until stride) yield board(stride - i - 1)(i)
+    ).toList
 
   val playX: (Int, Int) => TicTacToe = play(xOrO = true)
   val play0: (Int, Int) => TicTacToe = play(xOrO = false)
@@ -103,32 +104,35 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
     case None => " "
   }
 
-  private def transposeBoard: Seq[Seq[Cell]] = board.transpose
+  private lazy val transposeBoard: Seq[Seq[Cell]] = board.transpose
 
-  private def playBoard(xOrO: Boolean)(row: Int, col: Int): Seq[Seq[Cell]] = for (i <- 0 until stride) yield if (i == row) playRow(xOrO)(board(i), col) else board(i)
+  private def playBoard(xOrO: Boolean)(row: Int, col: Int): Seq[Seq[Cell]] = (for (i <- 0 until stride) yield if (i == row) playRow(xOrO)(board(i), col) else board(i)).toList
 
-  private def playRow(xOrO: Boolean)(row: Seq[Cell], col: Int): Seq[Cell] = for (i <- 0 until stride) yield if (i == col) Some(xOrO) else row(i)
+  private def playRow(xOrO: Boolean)(row: Seq[Cell], col: Int): Seq[Cell] = (for (i <- 0 until stride) yield if (i == col) Some(xOrO) else row(i)).toList
 
-  private def same(cs: Seq[Cell]): Boolean = matching(cs)(player = true) || matching(cs)(player = false)
-
-  // CONSIDER Do we really need to specify the player?
-  private def matching(cs: Seq[Cell])(player: Boolean) = cs.forall(_.contains(player))
+  private def same(cs: Seq[Cell]): Option[Boolean] = cs match {
+    case h :: t => if (t.count(_ != h) == 0) h else None
+    case Nil => None
+    case x => throw DecisionTreeException(s"unsupported sequence type: ${x.getClass}")
+  }
 
   private def isMajority(cs: Seq[Cell])(player: Boolean): Boolean = cs.count(_.contains(player)) == 2 && cs.count(_.isEmpty) == 1
 
   private def majority(cs: Seq[Cell])(player: Boolean): Boolean = isMajority(cs)(player)
 
-  private lazy val rowMatch: Boolean = board.exists(same)
+  private lazy val rowMatch: Cell = doRowMatch(board)
 
-  private lazy val colMatch: Boolean = transposeBoard.exists(same)
+  private lazy val colMatch: Cell = doRowMatch(transposeBoard)
 
-  private lazy val diagMatch: Boolean = same(diagonal(true)) || same(diagonal(false))
+  private lazy val diagMatch: Cell = same(diagonal(true).toList) orElse same(diagonal(false).toList)
+
+  private def doRowMatch(css: Seq[Seq[Cell]]) = css.foldLeft[Cell](None)((r, c) => r orElse same(c))
 
   private def rowMajority(player: Boolean): Boolean = board.exists(majority(_)(player))
 
   private def colMajority(player: Boolean): Boolean = transposeBoard.exists(majority(_)(player))
 
-  private def diagMajority(player: Boolean): Boolean = majority(diagonal(true))(player) || majority(diagonal(false))(player)
+  private def diagMajority(player: Boolean): Boolean = majority(diagonal(true).toList)(player) || majority(diagonal(false).toList)(player)
 }
 
 object TicTacToe {
@@ -141,14 +145,14 @@ object TicTacToe {
   def apply(): TicTacToe = apply(empty)
 
   private def parseString(s: String): TicTacToe = {
-    val chars = s.toCharArray.toSeq
+    val chars = s.toCharArray.toList
     val cells: Seq[Cell] = chars map {
       case ' ' => None
       case 'X' => Some(true)
       case '0' => Some(false)
       case x => throw DecisionTreeException(s"TicTacToe: illegal character: $x")
     }
-    val board: Seq[Seq[Cell]] = cells.grouped(stride).toSeq
+    val board: Seq[Seq[Cell]] = cells.grouped(stride).toList
     TicTacToe(board)
   }
 
@@ -180,11 +184,7 @@ object TicTacToe {
      * @return an Option of Boolean: if None then this state is not a goal state.
      *         If Some(b) then we got a result and the winner is the antagonist who moves first.
      */
-    def isGoal(s: TicTacToe): Option[Boolean] =
-      if (s.line)
-        Some(s.player)
-      else
-        None
+    def isGoal(s: TicTacToe): Option[Boolean] = s.line
 
     /**
      * Return all of the possible moves from the given state.

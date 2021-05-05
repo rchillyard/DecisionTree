@@ -3,6 +3,7 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.stride
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+
 import scala.util.{Failure, Success}
 
 class TicTacToeSpec extends AnyFlatSpec with should.Matchers {
@@ -65,22 +66,24 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers {
     }
 
     it should "line row" in {
-        TicTacToe.parse("XXX      ").get.line shouldBe true
-        TicTacToe.parse("   XXX   ").get.line shouldBe true
-        TicTacToe.parse("      XXX").get.line shouldBe true
-        TicTacToe.parse("0     XXX").get.line shouldBe true
-        TicTacToe.parse("000   X  ").get.line shouldBe true
+      TicTacToe.parse("XXX      ").get.line shouldBe Some(true)
+      TicTacToe.parse("   XXX   ").get.line shouldBe Some(true)
+      TicTacToe.parse("      XXX").get.line shouldBe Some(true)
+      TicTacToe.parse("0     XXX").get.line shouldBe Some(true)
+      TicTacToe.parse("000   X  ").get.line shouldBe Some(false)
     }
 
     it should "line col" in {
-        TicTacToe.parse("X  X  X  ").get.line shouldBe true
-        TicTacToe.parse(" X 0X  X ").get.line shouldBe true
-        TicTacToe.parse("0 X  X  X").get.line shouldBe true
+      TicTacToe.parse("X  X  X  ").get.line shouldBe Some(true)
+      TicTacToe.parse(" X 0X  X ").get.line shouldBe Some(true)
+      TicTacToe.parse("0 X  X  X").get.line shouldBe Some(true)
+      TicTacToe.parse("0 X 0X  0").get.line shouldBe Some(false)
     }
 
     it should "line diag" in {
-        TicTacToe.parse("XXX     0").get.line shouldBe true
-        TicTacToe.parse("   XXX0  ").get.line shouldBe true
-        TicTacToe.parse(" 0    XXX").get.line shouldBe true
+      TicTacToe.parse("XXX     0").get.line shouldBe Some(true)
+      TicTacToe.parse("   XXX0  ").get.line shouldBe Some(true)
+      TicTacToe.parse(" 0    XXX").get.line shouldBe Some(true)
+      TicTacToe.parse(" X    000").get.line shouldBe Some(false)
     }
 }
