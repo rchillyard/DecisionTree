@@ -7,6 +7,7 @@
  */
 package com.phasmidsoftware.util;
 
+import java.io.Serial;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -87,10 +88,10 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     public PriorityQueueJava<E> insert(E e) {
         if (e == null)
             throw new NullPointerException();
-        System.out.println("insert: this: " + this);
+//        System.out.println("insert: this: " + this);
         PriorityQueueJava<E> result = (size >= this.heap.length) ? grow(heap.length * 2) : new PriorityQueueJava<>(this);
         result.doInsert(e);
-        System.out.println("insert: result: " + result);
+//        System.out.println("insert: result: " + result);
         return result;
     }
 
@@ -100,13 +101,13 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      * @return a tuple of the new PriorityQueueJava (without its smallest element) and the smallest element.
      */
     public DeleteResult<E> del() {
-        System.out.println("del: this: " + this);
+//        System.out.println("del: this: " + this);
         if (size == 0)
             return new DeleteResult<>(this, null);
         PriorityQueueJava<E> result = new PriorityQueueJava<>(this);
-        System.out.println("del: result (1): " + result);
+//        System.out.println("del: result (1): " + result);
         E e = result.doDel();
-        System.out.println("del: result (2): " + result);
+//        System.out.println("del: result (2): " + result);
         return new DeleteResult<>(result, e);
     }
 
@@ -396,6 +397,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         private final E value;
     }
 
+    @Serial
     private static final long serialVersionUID = -7720805057305804111L;
 
     private static final int DEFAULT_INITIAL_CAPACITY = 11;

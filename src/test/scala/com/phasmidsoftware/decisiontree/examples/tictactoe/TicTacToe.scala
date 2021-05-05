@@ -1,8 +1,9 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.stride
-import com.phasmidsoftware.decisiontree.moves.{State, Transition}
+import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.DecisionTreeException
+
 import scala.util.{Failure, Success, Try}
 
 case class TicTacToe(board: Seq[Seq[Cell]]) {
@@ -27,7 +28,7 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
   def diagonal(b: Boolean): Seq[Cell] = if (b)
     for (i <- 0 until stride) yield board(i)(i)
   else
-    for (i <- 0 until stride) yield board(stride - i)(i)
+    for (i <- 0 until stride) yield board(stride - i - 1)(i)
 
   def open: Seq[(Int, Int)] = for (i <- 0 until stride; j <- 0 until stride; if board(i)(j).isEmpty) yield i -> j
 
@@ -63,28 +64,35 @@ object TicTacToe {
 
   private def parseString(s: String): TicTacToe = {
     val chars = s.toCharArray.toSeq
-    val cells: Seq[Cell] = chars map ({
+    val cells: Seq[Cell] = chars map {
       case ' ' => None
       case 'X' => Some(true)
       case '0' => Some(false)
       case x => throw DecisionTreeException(s"TicTacToe: illegal character: $x")
-    })
+    }
     val board: Seq[Seq[Cell]] = cells.grouped(stride).toSeq
     TicTacToe(board)
   }
 
   def parse(s: String): Try[TicTacToe] =
     if (s.length == stride * stride) Success(parseString(s))
-    else Failure(DecisionTreeException(s"TicTacToe: parse failure: ${s}"))
+    else Failure(DecisionTreeException(s"TicTacToe: parse failure: $s"))
 
   trait TicTacToeState extends State[TicTacToe] {
+    //    def toPlay(s: TicTacToe): Boolean = (stride * stride - s.open.size) % 2 == 0
+
     def isValid(s: TicTacToe): Boolean = true
 
     def heuristic(s: TicTacToe): Double = 0
 
     def isGoal(s: TicTacToe): Boolean = s.line
 
-    def moves(s: TicTacToe): Seq[Transition[TicTacToe]] = Nil
+    def moves(s: TicTacToe): Seq[Transition[TicTacToe]] = {
+      val zs: Seq[(Int, Int)] = s.open
+      val toPlay = (stride * stride - zs.size) % 2 == 0
+      val f: TicTacToe => (Int, Int) => TicTacToe = t => if (toPlay) t.playX else t.play0
+      for (z <- zs) yield Move(x => f(x)(z._1, z._2), z.toString())
+    }
   }
 
   implicit object TicTacToeState extends TicTacToeState

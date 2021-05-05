@@ -6,7 +6,15 @@ package com.phasmidsoftware.decisiontree.moves
  * @tparam S the type on which the state is based.
  *           For example, S might be Tic-tac-toe or Chess.
  */
-trait State[S] {
+trait State[S] extends Ordering[S] {
+  //  /**
+  //   * Method to determine which of two antagonists is to play on state S.
+  //   *
+  //   * @param s a state.
+  //   * @return true if it is the first to play (e.g. White in chess). Else false.
+  //   */
+  //  def toPlay(s: S): Boolean
+
   /**
    * Method to determine if state s is a valid state.
    *
@@ -39,6 +47,16 @@ trait State[S] {
    * @return a sequence of Transition[S]
    */
   def moves(s: S): Seq[Transition[S]]
+
+  /**
+   * Method to determine the ordering of two States.
+   * It is based on the heuristic.
+   *
+   * @param x first state.
+   * @param y second state.
+   * @return <0 if x < y, >0 if x > y, else 0.
+   */
+  def compare(x: S, y: S): Int = heuristic(x).compare(heuristic(y))
 }
 
 /**
