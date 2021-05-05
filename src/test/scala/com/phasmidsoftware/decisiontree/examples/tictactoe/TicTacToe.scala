@@ -25,6 +25,21 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
    */
   lazy val line: Boolean = rowMatch || colMatch || diagMatch
 
+  lazy val heuristic: Double = {
+    def toInt(b: Boolean): Int = if (b) 1 else 0
+
+    toInt(potentialLine(player)) - toInt(potentialLine(!player))
+  }
+
+  /**
+   * Method to determine whether there is a potential line of marks of the given player.
+   * The line may be horizontal (a row), vertical (a column) or diagonal.
+   *
+   * @param player true for X, false for 0.
+   * @return true if there is a line of player's marks in this TicTacToe.
+   */
+  def potentialLine(player: Boolean): Boolean = rowMajority(player) || colMajority(player) || diagMajority(player)
+
   /**
    * Method to create a new TicTacToe from this TicTacToe.
    *
@@ -94,17 +109,26 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
 
   private def playRow(xOrO: Boolean)(row: Seq[Cell], col: Int): Seq[Cell] = for (i <- 0 until stride) yield if (i == col) Some(xOrO) else row(i)
 
-  private def same(cs: Seq[Cell]): Boolean = matching(cs)(true) || matching(cs)(false)
+  private def same(cs: Seq[Cell]): Boolean = matching(cs)(player = true) || matching(cs)(player = false)
 
+  // CONSIDER Do we really need to specify the player?
   private def matching(cs: Seq[Cell])(player: Boolean) = cs.forall(_.contains(player))
 
-  private def majority(cs: Seq[Cell]): Boolean = matching(cs)(true) || matching(cs)(false)
+  private def isMajority(cs: Seq[Cell])(player: Boolean): Boolean = cs.count(_.contains(player)) == 2 && cs.count(_.isEmpty) == 1
 
-  private def rowMatch: Boolean = board.exists(same)
+  private def majority(cs: Seq[Cell])(player: Boolean): Boolean = isMajority(cs)(player)
 
-  private def colMatch: Boolean = transposeBoard.exists(same)
+  private lazy val rowMatch: Boolean = board.exists(same)
 
-  private def diagMatch: Boolean = same(diagonal(true)) || same(diagonal(false))
+  private lazy val colMatch: Boolean = transposeBoard.exists(same)
+
+  private lazy val diagMatch: Boolean = same(diagonal(true)) || same(diagonal(false))
+
+  private def rowMajority(player: Boolean): Boolean = board.exists(majority(_)(player))
+
+  private def colMajority(player: Boolean): Boolean = transposeBoard.exists(majority(_)(player))
+
+  private def diagMajority(player: Boolean): Boolean = majority(diagonal(true))(player) || majority(diagonal(false))(player)
 }
 
 object TicTacToe {
@@ -147,7 +171,7 @@ object TicTacToe {
      * @param s a state.
      * @return the number of our aligned cells - their aligned cells.
      */
-    def heuristic(s: TicTacToe): Double = 0
+    def heuristic(s: TicTacToe): Double = s.heuristic
 
     /**
      * Have we reached a result? And, if so, who won?
