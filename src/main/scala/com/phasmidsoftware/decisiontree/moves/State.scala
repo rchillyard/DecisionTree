@@ -7,13 +7,6 @@ package com.phasmidsoftware.decisiontree.moves
  *           For example, S might be Tic-tac-toe or Chess.
  */
 trait State[S] extends Ordering[S] {
-  //  /**
-  //   * Method to determine which of two antagonists is to play on state S.
-  //   *
-  //   * @param s a state.
-  //   * @return true if it is the first to play (e.g. White in chess). Else false.
-  //   */
-  //  def toPlay(s: S): Boolean
 
   /**
    * Method to determine if state s is a valid state.
@@ -27,9 +20,10 @@ trait State[S] extends Ordering[S] {
    * Method to determine if state s is a goal state.
    *
    * @param s a (current) state.
-   * @return a Boolean.
+   * @return an Option of Boolean: if None then this state is not a goal state.
+   *         If Some(b) then we got a result and the winner is the antagonist who moves first.
    */
-  def isGoal(s: S): Boolean
+  def isGoal(s: S): Option[Boolean]
 
   /**
    * Method to determine an estimate of a state's efficacy in reaching a goal..

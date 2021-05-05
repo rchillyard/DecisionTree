@@ -79,19 +79,21 @@ object TicTacToe {
     else Failure(DecisionTreeException(s"TicTacToe: parse failure: $s"))
 
   trait TicTacToeState extends State[TicTacToe] {
-    //    def toPlay(s: TicTacToe): Boolean = (stride * stride - s.open.size) % 2 == 0
-
     def isValid(s: TicTacToe): Boolean = true
 
     def heuristic(s: TicTacToe): Double = 0
 
-    def isGoal(s: TicTacToe): Boolean = s.line
+    def isGoal(s: TicTacToe): Option[Boolean] =
+      if (s.line)
+        Some((stride * stride - s.open.size) % 2 == 1)
+      else
+        None
 
     def moves(s: TicTacToe): Seq[Transition[TicTacToe]] = {
-      val zs: Seq[(Int, Int)] = s.open
+      val zs: Seq[(Int, Int)] = s.open // TODO need to shuffle
       val toPlay = (stride * stride - zs.size) % 2 == 0
       val f: TicTacToe => (Int, Int) => TicTacToe = t => if (toPlay) t.playX else t.play0
-      for (z <- zs) yield Move(x => f(x)(z._1, z._2), z.toString())
+      for (z <- zs) yield Move[TicTacToe](x => f(x)(z._1, z._2), z.toString())
     }
   }
 

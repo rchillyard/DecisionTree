@@ -1,6 +1,7 @@
 package com.phasmidsoftware.decisiontree
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe
+import com.phasmidsoftware.decisiontree.moves.State
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 
@@ -11,17 +12,12 @@ class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
   it should "evaluate" in {
     val eval = new Evaluator[TicTacToe]
     val start: TicTacToe = TicTacToe()
-    val states: Seq[TicTacToe] = eval.evaluate(start)
-    println(s"${states.size} States in reverse order")
-    println(states.mkString("---\n", "---\n", "---\n"))
-  }
-
-  it should "result" in {
-    val eval = new Evaluator[TicTacToe]
-    val start: TicTacToe = TicTacToe()
-    val states: Seq[TicTacToe] = eval.evaluate(start)
-    val (xo, _) = eval.result(states)
-    xo should matchPattern { case Some(true) => }
+    val so: Option[TicTacToe] = eval.evaluate(start)
+    so should matchPattern { case Some(_) => }
+    val s = so.get
+    println(s)
+    // XXX ensure that X is the winner of this game.
+    implicitly[State[TicTacToe]].isGoal(s) shouldBe Some(true)
   }
 
 }
