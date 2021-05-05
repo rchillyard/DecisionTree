@@ -1,5 +1,6 @@
 package com.phasmidsoftware.decisiontree.moves
 
+import com.phasmidsoftware.decisiontree.examples.chess.Chess
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 

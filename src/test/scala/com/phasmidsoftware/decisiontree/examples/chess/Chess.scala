@@ -1,4 +1,6 @@
-package com.phasmidsoftware.decisiontree.moves
+package com.phasmidsoftware.decisiontree.examples.chess
+
+import com.phasmidsoftware.decisiontree.moves.{State, Transition}
 
 /**
  * Mock class for testing Moves and States

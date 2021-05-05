@@ -94,7 +94,11 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
 
   private def playRow(xOrO: Boolean)(row: Seq[Cell], col: Int): Seq[Cell] = for (i <- 0 until stride) yield if (i == col) Some(xOrO) else row(i)
 
-  private def same(cs: Seq[Cell]): Boolean = cs.forall(_.contains(true)) || cs.forall(_.contains(false))
+  private def same(cs: Seq[Cell]): Boolean = matching(cs)(true) || matching(cs)(false)
+
+  private def matching(cs: Seq[Cell])(player: Boolean) = cs.forall(_.contains(player))
+
+  private def majority(cs: Seq[Cell]): Boolean = matching(cs)(true) || matching(cs)(false)
 
   private def rowMatch: Boolean = board.exists(same)
 
