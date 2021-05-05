@@ -4,6 +4,7 @@ import com.phasmidsoftware.decisiontree.tree.{Goal, LazyTree, Tree}
 import com.phasmidsoftware.util.{Flog, LogFunction, Loggable, Loggables}
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
+import org.scalatest.tagobjects.Slow
 
 import scala.collection.immutable.Queue
 
@@ -42,11 +43,11 @@ class TreeSpec extends flatspec.AnyFlatSpec with should.Matchers {
     val target = Tree(1, Seq(Tree(2, Seq(Tree(3), Tree(4))), Tree(5, Seq(Tree(6), Tree(7)))))
     target.preOrder(x => x % 2 == 0) shouldBe Queue.empty
   }
-  it should "work for a very deep tree" in {
+  it should "work for a very deep tree" taggedAs Slow in {
     val n = 1000000
     val target: Tree[Int] = LazyList.from(1).take(n).foldLeft(Tree(0))((t, x) => Tree(x, Seq(t)))
     val preOrder = target.preOrder()
-    preOrder.size shouldBe (n+1)
+    preOrder.size shouldBe (n + 1)
   }
 
   behavior of "inOrder"
@@ -66,11 +67,12 @@ class TreeSpec extends flatspec.AnyFlatSpec with should.Matchers {
     val target = Tree(1, Seq(Tree(2, Seq(Tree(3), Tree(4))), Tree(5, Seq(Tree(6), Tree(7)))))
     target.inOrder(x => x % 2 == 0) shouldBe Queue.empty
   }
-  it should "work for a very deep tree" in {
+
+  it should "work for a very deep tree" taggedAs Slow in {
     val n = 1000000
     val target: Tree[Int] = LazyList.from(1).take(n).foldLeft(Tree(0))((t, x) => Tree(x, Seq(t)))
     val inOrder = target.inOrder()
-    inOrder.size shouldBe (n+1)
+    inOrder.size shouldBe (n + 1)
   }
 
   behavior of "postOrder"

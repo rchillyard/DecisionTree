@@ -1,7 +1,6 @@
-package com.phasmidsoftware.decisiontree
+package com.phasmidsoftware.decisiontree.moves
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe
-import com.phasmidsoftware.decisiontree.moves.State
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 

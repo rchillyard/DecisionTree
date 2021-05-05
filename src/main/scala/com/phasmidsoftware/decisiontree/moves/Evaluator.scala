@@ -1,6 +1,5 @@
-package com.phasmidsoftware.decisiontree
+package com.phasmidsoftware.decisiontree.moves
 
-import com.phasmidsoftware.decisiontree.moves.State
 import com.phasmidsoftware.util.PriorityQueue
 
 import scala.annotation.tailrec

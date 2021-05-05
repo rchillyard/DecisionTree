@@ -8,12 +8,32 @@ import scala.util.{Failure, Success, Try}
 
 case class TicTacToe(board: Seq[Seq[Cell]]) {
 
-  def line: Boolean = rowMatch || colMatch || diagMatch
+  /**
+   * Method to determine which player was responsible for creating this state.
+   * The empty state will yield false (0 player).
+   * A goal state will yield the winner.
+   *
+   * @return true for the first player (X), false for the second player (0)
+   */
+  lazy val player: Boolean = (stride * stride - open.size) % 2 == 1
 
-  def render: Cell => String = {
-    case Some(b) => if (b) "X" else "0"
-    case None => " "
-  }
+  /**
+   * Method to determine whether there is a line of marks.
+   * The line may be horizontal (a row), vertical (a column) or diagonal.
+   *
+   * @return true if there is a line of similar marks in this TicTacToe.
+   */
+  lazy val line: Boolean = rowMatch || colMatch || diagMatch
+
+  /**
+   * Method to create a new TicTacToe from this TicTacToe.
+   *
+   * @param xOrO true if X is to play, false otherwise.
+   * @param row  the row at which the mark should be made.
+   * @param col  the column at which the mark should be made.
+   * @return a new TicTacToe with the appropriate Cell marked.
+   */
+  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToe = TicTacToe(playBoard(xOrO)(row, col))
 
   override def toString: String = {
     val sb = new StringBuilder
@@ -21,21 +41,52 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
     sb.toString
   }
 
+  /**
+   * Method to yield a row from the board.
+   *
+   * @param i the row index from 0 thru 2.
+   * @return a sequence of Cells.
+   */
   def row(i: Int): Seq[Cell] = board(i)
 
+  /**
+   * Method to yield a column from the board.
+   * This method is slightly less efficient than row.
+   * If calling column many times, consider invoking transform first and then calling row.
+   *
+   * @param i the column index from 0 thru 2.
+   * @return a sequence of Cells.
+   */
   def column(i: Int): Seq[Cell] = for (j <- 0 until stride) yield board(j)(i)
 
+  /**
+   * Val to determine the list of open cells from this TIcTacToe.
+   *
+   * @return a sequence of (Int, Int) tuples corresponding to the row, column indices.
+   */
+  lazy val open: Seq[(Int, Int)] = for (i <- 0 until stride; j <- 0 until stride; if board(i)(j).isEmpty) yield i -> j
+
+  /**
+   * Method to determine if there's a diagonal of one mark.
+   *
+   * @param b the orientation of the diagonal: true: 0,0 thru 2,2 otherwise 2,0 thru 0,2.
+   * @return a sequence of Cells.
+   */
   def diagonal(b: Boolean): Seq[Cell] = if (b)
     for (i <- 0 until stride) yield board(i)(i)
   else
     for (i <- 0 until stride) yield board(stride - i - 1)(i)
 
-  def open: Seq[(Int, Int)] = for (i <- 0 until stride; j <- 0 until stride; if board(i)(j).isEmpty) yield i -> j
-
-  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToe = TicTacToe(playBoard(xOrO)(row, col))
-
   val playX: (Int, Int) => TicTacToe = play(xOrO = true)
   val play0: (Int, Int) => TicTacToe = play(xOrO = false)
+
+  /**
+   * Function to render a Cell.
+   */
+  private val render: Cell => String = {
+    case Some(b) => if (b) "X" else "0"
+    case None => " "
+  }
 
   private def transposeBoard: Seq[Seq[Cell]] = board.transpose
 
@@ -50,7 +101,6 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
   private def colMatch: Boolean = transposeBoard.exists(same)
 
   private def diagMatch: Boolean = same(diagonal(true)) || same(diagonal(false))
-
 }
 
 object TicTacToe {
@@ -79,20 +129,44 @@ object TicTacToe {
     else Failure(DecisionTreeException(s"TicTacToe: parse failure: $s"))
 
   trait TicTacToeState extends State[TicTacToe] {
+    /**
+     * In this game, all states are valid.
+     *
+     * @param s a state.
+     * @return true.
+     */
     def isValid(s: TicTacToe): Boolean = true
 
+    /**
+     * How close are we to winning?
+     *
+     * @param s a state.
+     * @return the number of our aligned cells - their aligned cells.
+     */
     def heuristic(s: TicTacToe): Double = 0
 
+    /**
+     * Have we reached a result? And, if so, who won?
+     *
+     * @param s a (current) state.
+     * @return an Option of Boolean: if None then this state is not a goal state.
+     *         If Some(b) then we got a result and the winner is the antagonist who moves first.
+     */
     def isGoal(s: TicTacToe): Option[Boolean] =
       if (s.line)
-        Some((stride * stride - s.open.size) % 2 == 1)
+        Some(s.player)
       else
         None
 
+    /**
+     * Return all of the possible moves from the given state.
+     *
+     * @param s a state.
+     * @return a sequence of Transition[S]
+     */
     def moves(s: TicTacToe): Seq[Transition[TicTacToe]] = {
-      val zs: Seq[(Int, Int)] = Shuffle(s.open)
-      val toPlay = (stride * stride - zs.size) % 2 == 0
-      val f: TicTacToe => (Int, Int) => TicTacToe = t => if (toPlay) t.playX else t.play0
+      val zs: Seq[(Int, Int)] = Shuffle(s.open, 3L) // we arbitrarily always want X to win
+      val f: TicTacToe => (Int, Int) => TicTacToe = t => if (s.player) t.play0 else t.playX
       for (z <- zs) yield Move[TicTacToe](x => f(x)(z._1, z._2), z.toString())
     }
   }
