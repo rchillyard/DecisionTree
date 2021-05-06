@@ -3,7 +3,6 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
-
 import scala.util.{Failure, Success, Try}
 
 case class TicTacToe(board: Seq[Seq[Cell]]) {
@@ -24,12 +23,6 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
    * @return true if there is a line of similar marks in this TicTacToe.
    */
   lazy val line: Boolean = rowMatch || colMatch || diagMatch
-
-  lazy val heuristic: Double = {
-    def toInt(b: Boolean): Int = if (b) 1 else 0
-
-    toInt(potentialLine(player)) - toInt(potentialLine(!player))
-  }
 
   /**
    * Method to determine whether there is a potential line of marks of the given player.
@@ -101,6 +94,12 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
   private val render: Cell => String = {
     case Some(b) => if (b) "X" else "0"
     case None => " "
+  }
+
+  private lazy val heuristic: Double = {
+    def toInt(b: Boolean): Int = if (b) 1 else 0
+
+    toInt(potentialLine(player)) - toInt(potentialLine(!player))
   }
 
   private def transposeBoard: Seq[Seq[Cell]] = board.transpose

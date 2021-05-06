@@ -1,7 +1,6 @@
 package com.phasmidsoftware.decisiontree.moves
 
 import com.phasmidsoftware.util.PriorityQueue
-
 import scala.annotation.tailrec
 
 class Evaluator[S: State] {
