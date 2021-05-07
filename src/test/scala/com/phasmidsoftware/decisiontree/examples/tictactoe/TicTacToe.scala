@@ -25,12 +25,6 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
    */
   lazy val line: Cell = rowMatch orElse colMatch orElse diagMatch
 
-  lazy val heuristic: Double = {
-    def toInt(b: Boolean): Int = if (b) 1 else 0
-
-    toInt(potentialLine(player)) - toInt(potentialLine(!player))
-  }
-
   /**
    * Method to determine whether there is a potential line of marks of the given player.
    * The line may be horizontal (a row), vertical (a column) or diagonal.
@@ -110,8 +104,6 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
 
     toInt(potentialLine(player)) - toInt(potentialLine(!player))
   }
-
-  private def transposeBoard: Seq[Seq[Cell]] = board.transpose
 
   private def playBoard(xOrO: Boolean)(row: Int, col: Int): Seq[Seq[Cell]] = (for (i <- 0 until stride) yield if (i == row) playRow(xOrO)(board(i), col) else board(i)).toList
 
