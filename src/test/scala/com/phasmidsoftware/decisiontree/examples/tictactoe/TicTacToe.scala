@@ -105,6 +105,13 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
   }
 
   private lazy val transposeBoard: Seq[Seq[Cell]] = board.transpose
+  private lazy val heuristic: Double = {
+    def toInt(b: Boolean): Int = if (b) 1 else 0
+
+    toInt(potentialLine(player)) - toInt(potentialLine(!player))
+  }
+
+  private def transposeBoard: Seq[Seq[Cell]] = board.transpose
 
   private def playBoard(xOrO: Boolean)(row: Int, col: Int): Seq[Seq[Cell]] = (for (i <- 0 until stride) yield if (i == row) playRow(xOrO)(board(i), col) else board(i)).toList
 
