@@ -3,6 +3,7 @@ package com.phasmidsoftware.decisiontree.tree
 import com.phasmidsoftware.decisiontree.tree.Tree.TreeOps
 import com.phasmidsoftware.decisiontree.tree.Visitor.QueueVisitor
 import com.phasmidsoftware.util.PriorityQueue
+
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.collection.mutable
@@ -275,7 +276,7 @@ object Tree {
 
   private def bfsPriorityQueue[T: Ordering](p: T => Boolean, n: Node[T]): PriorityQueue[Node[T]] = {
     implicit val y: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => implicitly[Ordering[T]].compare(x.key, y.key)
-    bfsPQ(PriorityQueue[Node[T]], p)(PriorityQueue(n))
+    bfsPQ(PriorityQueue.minPQ[Node[T]], p)(PriorityQueue.minPQ(n))
   }
 
   @tailrec

@@ -76,15 +76,19 @@ public class TicTacToeIntOperations {
     }
 
     public static int rowLine(int x) {
+        if (x == 0) return 0;
         int y1 = x ^ 0x15; // XXX
         int y2 = x ^ 0x2A; // 000
         return y2 == 0 ? 2 : y1 == 0 ? 1 : 0;
     }
 
     public static int rowLinePending(int x) {
-        int y1 = x ^ 0x15; // XXX
-        int y2 = x ^ 0x2A; // 000
-        return y2 == 0 ? 2 : y1 == 0 ? 1 : 0;
+//        System.out.println("rowLinePending: "+Integer.toHexString(x));
+        return switch (x) {
+            case 0x11, 0x14, 0x05 -> 1;
+            case 0x22, 0x28, 0x0A -> 2;
+            default -> 0;
+        };
     }
 
     private static long flip(long y, int i, int j) {

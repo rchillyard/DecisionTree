@@ -1,7 +1,9 @@
 package com.phasmidsoftware.util
 
 import org.scalatest.{flatspec, matchers}
-import scala.collection.mutable.Queue
+
+import java.util.Comparator
+import scala.collection.mutable
 import scala.util.Random
 
 class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
@@ -31,17 +33,45 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 
 	it should "allow mix of insert and del" in {
 		val r = new Random(0)
-		val q: Queue[Double] = new Queue[Double]()
+		val q: mutable.Queue[Double] = new mutable.Queue[Double]()
 		var pq: PriorityQueueJava[Double] = new PriorityQueueJava[Double]
 		for (_ <- 1 to 100) {
 			val x = r.nextDouble() - 0.5
-			if (x >= 0) pq = pq.insert(x)
+			if (x >= 0) {
+				pq = pq.insert(x)
+				//				println(pq)
+			}
 			else {
 				val z: PriorityQueueJava.DeleteResult[Double] = pq.del()
 				pq = z.getPq
+				//				println(pq)
 				q.enqueue(z.getValue)
+				//				println(z.getValue)
 			}
 		}
+		pq.del().getValue shouldBe 0.00670159595285269
+	}
+
+	it should "allow mix of insert and del using a max PQ" in {
+		val comparator: Comparator[Double] = (o1: Double, o2: Double) => o1.compare(o2)
+		val r = new Random(0)
+		val q: mutable.Queue[Double] = new mutable.Queue[Double]()
+		var pq: PriorityQueueJava[Double] = new PriorityQueueJava[Double](comparator.reversed())
+		for (_ <- 1 to 100) {
+			val x = r.nextDouble() - 0.5
+			if (x >= 0) {
+				pq = pq.insert(x)
+				//				println(pq)
+			}
+			else {
+				val z: PriorityQueueJava.DeleteResult[Double] = pq.del()
+				pq = z.getPq
+				//				println(pq)
+				q.enqueue(z.getValue)
+				//				println(z.getValue)
+			}
+		}
+		pq.del().getValue shouldBe 0.2150310138504744
 	}
 
 	behavior of "iterator"

@@ -1,11 +1,20 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.stride
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.start
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
+
 import scala.util.{Failure, Success, Try}
 
-case class TicTacToeInt(board: Int) {
+case class TicTacToeInt(board: Int, prior: TicTacToeInt = start) {
+
+  override def hashCode(): Int = board.hashCode()
+
+  override def equals(obj: Any): Boolean = obj match {
+    case TicTacToeInt(b, _) => board == b
+    case _ => false
+  }
 
   /**
    * Method to determine which player was responsible for creating this state.
@@ -24,6 +33,7 @@ case class TicTacToeInt(board: Int) {
    */
   lazy val line: Cell = rowDiagMatch(isLine) orElse transpose.rowDiagMatch(isLine)
 
+  // TODO make private once private method tester is working
   def row(i: Int): Int = TicTacToeIntOperations.row(board, i)
 
   /**
@@ -46,9 +56,9 @@ case class TicTacToeInt(board: Int) {
    * @param col  the column at which the mark should be made.
    * @return a new TicTacToe with the appropriate Cell marked.
    */
-  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToeInt = TicTacToeInt(TicTacToeIntOperations.play(board, xOrO, row, col))
+  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToeInt = TicTacToeInt(TicTacToeIntOperations.play(board, xOrO, row, col), this)
 
-  override def toString: String = TicTacToeIntOperations.render(board)
+  override def toString: String = s"${TicTacToeIntOperations.render(board)} ($heuristic)"
 
   /**
    * Val to determine the list of open cells from this TIcTacToe.
@@ -65,9 +75,20 @@ case class TicTacToeInt(board: Int) {
   val play0: (Int, Int) => TicTacToeInt = play(xOrO = false)
 
 
-  private lazy val heuristic: Double = pendingLine match {
-    case None => 0
-    case Some(x) => if (x == player) 1 else -1
+  def blocking(x: Boolean): Boolean = false // TODO implement me
+
+  private lazy val center = ((board ^ prior.board) & 0xC00000) != 0
+
+  private lazy val heuristic: Double = line match {
+    case Some(x) if x == player => 8
+    case Some(x) if blocking(x) => 7
+    case _ => pendingLine // TODO we need to be able to distinguish a "fork" position from a single pendingLine
+    match {
+      case Some(x) if x == player => 6
+      case _ if center => 3
+      case _ => 0
+    }
+
   }
 
   def transpose: TicTacToeInt = TicTacToeInt(TicTacToeIntOperations.transposeBoard(board))
@@ -82,13 +103,15 @@ case class TicTacToeInt(board: Int) {
     case _ => None
   }
 
-  private def rowDiagPendingMatch(f: Int => Option[Int]): Option[Int] = LazyList.from(0).take(3).map(row).map(f).foldLeft[Option[Int]](None)((r, c) => r & c) & diagPendingMatch(f)
+  def rowDiagPendingMatch(f: Int => Option[Int]): Option[Int] =
+    LazyList.from(0).take(3).map(row).map(f).foldLeft[Option[Int]](None)((r, c) => r & c) & diagPendingMatch(f)
 
-  private def isPendingLine(x: Int): Option[Int] = TicTacToeIntOperations.rowLinePending(TicTacToeIntOperations.row(board, x)) match {
-    case 1 => Some(0)
-    case 2 => Some(1)
-    case _ => None
-  }
+  def isPendingLine(x: Int): Option[Int] =
+    TicTacToeIntOperations.rowLinePending(TicTacToeIntOperations.row(board, x)) match {
+      case 1 => Some(0)
+      case 2 => Some(1)
+      case _ => None
+    }
 
   private def diagPendingMatch(f: Int => Option[Int]): Option[Int] = f(TicTacToeIntOperations.diagonal(board))
 }
@@ -99,19 +122,6 @@ object TicTacToeInt {
   val start: TicTacToeInt = apply()
 
   def apply(): TicTacToeInt = apply(0)
-
-  private def parseString(s: String): TicTacToeInt = {
-    val chars = s.toCharArray.toSeq
-    val cells: Seq[Int] = chars map {
-      case ' ' | '.' => 0
-      case 'X' => 1
-      case '0' => 2
-      case x => throw DecisionTreeException(s"TicTacToeInt: illegal character: $x")
-    }
-    if (cells.length < 9) throw DecisionTreeException("insufficient elements")
-    else
-      TicTacToeInt(TicTacToeIntOperations.parse(cells.toArray))
-  }
 
   def parse(s: String): Try[TicTacToeInt] =
     if (s.length == stride * stride) Success(parseString(s))
@@ -158,5 +168,23 @@ object TicTacToeInt {
 
   implicit object TicTacToeIntState extends TicTacToeIntState
 
+  /**
+   * Method to parse a pattern for a starting position.
+   * NOTE: do not use for later positions.
+   *
+   * @param s a String made up of 9 case-independent characters, each of which must be an X, 0, O, ., or space.
+   *          CONSIDER allowing newlines.
+   * @return a TicTacToeInt.
+   */
+  def parseString(s: String): TicTacToeInt = {
+    val cells = s.toCharArray.toSeq map {
+      case ' ' | '.' => 0
+      case 'X' | 'x' => 1
+      case '0' | 'o' | 'O' => 2
+      case x => throw DecisionTreeException(s"TicTacToeInt: illegal character: $x")
+    }
+    if (cells.length >= 9) TicTacToeInt(TicTacToeIntOperations.parse(cells.toArray))
+    else throw DecisionTreeException("insufficient elements")
+  }
 }
 

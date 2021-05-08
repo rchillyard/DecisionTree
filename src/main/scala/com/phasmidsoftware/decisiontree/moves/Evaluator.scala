@@ -1,6 +1,7 @@
 package com.phasmidsoftware.decisiontree.moves
 
 import com.phasmidsoftware.util.PriorityQueue
+
 import scala.annotation.tailrec
 
 class Evaluator[S: State] {
@@ -17,10 +18,11 @@ class Evaluator[S: State] {
           Some(s)
         else {
           val qs = for (z <- ss.moves(s); q = z(s) if ss.isValid(q)) yield q
-          inner(qs.sorted.foldLeft(q)((y, s) => y.insert(s)))
+          val sorted = qs.sorted
+          inner(sorted.foldLeft(q)((y, s) => y.insert(s)))
         }
       }
 
-    inner(PriorityQueue(s))
+    inner(PriorityQueue.maxPQ(s))
   }
 }

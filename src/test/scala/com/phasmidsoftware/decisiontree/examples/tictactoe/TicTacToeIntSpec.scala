@@ -1,12 +1,15 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.stride
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.start.isPendingLine
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.{parseString, stride}
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeIntOperations._
+import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+
 import scala.util.{Failure, Success, Try}
 
-class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers {
+class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
 
     behavior of "TicTacToeIntOperations"
     it should "open" in {
@@ -35,6 +38,8 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers {
         transposeBoard(0x000C0000) shouldBe 0xc000000
         transposeBoard(0x00030000) shouldBe 0x300000
         transposeBoard(0x0000C000) shouldBe 0xc000
+        transposeBoard(0x44000000) shouldBe 0x40040000
+
     }
     it should "transpose to hex string" in {
         transposeBoard(0xC0000000).toHexString shouldBe "c0000000"
@@ -52,7 +57,7 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers {
         transposeBoard(0x03C00000) shouldBe 0x30c00000
     }
     it should "transpose String" in {
-        TicTacToeInt.parse("X  X  X  ").map(x => x.transpose).get.toString() shouldBe "XXX\n...\n...\n"
+        TicTacToeInt.parse("X  X  X  ").map(x => x.transpose).get.toString() shouldBe "XXX\n...\n...\n (8.0)"
         transposeBoard(0x03C00000) shouldBe 0x30c00000
     }
     it should "get rows" in {
@@ -66,13 +71,40 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers {
         diagonal(0xC00000) shouldBe 0xc
         diagonal(0xC000) shouldBe 3
     }
+    it should "rowLine" in {
+        rowLine(0x00) shouldBe 0
+        rowLine(0x15) shouldBe 1
+        rowLine(0x2A) shouldBe 2
+    }
+    it should "parseString" in {
+        parseString("X..X..X..").board shouldBe 0x41040000
+        parseString("XXX......").board shouldBe 0x54000000
+        parseString("X.X......").board shouldBe 0x44000000
+        parseString("0.0......").board shouldBe 0x88000000
+        parseString("XX.......").board shouldBe 0x50000000
+        parseString("00.......").board shouldBe 0xA0000000
+        parseString(".XX......").board shouldBe 0x14000000
+        parseString(".00......").board shouldBe 0x28000000
+    }
+    it should "rowLinePending" in {
+        rowLinePending(0x00) shouldBe 0
+        rowLinePending(0x11) shouldBe 1
+        rowLinePending(0x22) shouldBe 2
+        rowLinePending(0x14) shouldBe 1
+        rowLinePending(0x28) shouldBe 2
+        rowLinePending(0x05) shouldBe 1
+        rowLinePending(0x0A) shouldBe 2
+    }
 
     behavior of "TicTacToeInt"
     it should "row" in {
         val ty: Try[TicTacToeInt] = TicTacToeInt.parse("X   X   X")
-        ty.map(_.row(0)) should matchPattern { case Success(16) => }
-        ty.map(_.row(1)) should matchPattern { case Success(4) => }
-        ty.map(_.row(2)) should matchPattern { case Success(1) => }
+        //        val rowMethod = PrivateMethod[Int](Symbol("row"))
+        //        val invokeRow:  Int => TicTacToeInt => Int = x => t =>  t invokePrivate rowMethod(x)
+        val invokeRow: Int => TicTacToeInt => Int = x => t => t.row(x)
+        ty.map(invokeRow(0)) should matchPattern { case Success(16) => }
+        ty.map(invokeRow(1)) should matchPattern { case Success(4) => }
+        ty.map(invokeRow(2)) should matchPattern { case Success(1) => }
     }
 
     it should "open" in {
@@ -84,14 +116,14 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers {
         val t0 = TicTacToeInt()
         val t1 = t0.play(xOrO = true)(0, 0)
         t1.open.size shouldBe stride * stride - 1
-        t1.toString shouldBe "X..\n...\n...\n"
+        t1.toString shouldBe "X..\n...\n...\n (0.0)"
     }
 
     it should "play false, 1, 0" in {
         val t0 = TicTacToeInt()
         val t1 = t0.play(xOrO = false)(1, 0)
         t1.open.size shouldBe stride * stride - 1
-        t1.toString shouldBe "...\n0..\n...\n"
+        t1.toString shouldBe "...\n0..\n...\n (0.0)"
     }
 
     it should "playX 0, 0 and play0 1, 0" in {
@@ -99,7 +131,7 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers {
         val t1 = t0.playX(0, 0)
         val t2 = t1.play0(1, 0)
         t2.open.size shouldBe stride * stride - 2
-        t2.toString shouldBe "X..\n0..\n...\n"
+        t2.toString shouldBe "X..\n0..\n...\n (0.0)"
     }
 
     it should "parse" in {
@@ -137,4 +169,18 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers {
         TicTacToeInt.parse("   XXX0  ").get.line shouldBe Some(true)
         TicTacToeInt.parse(" 0    XXX").get.line shouldBe Some(true)
     }
+
+    ignore should "pendingLine" in {
+        TicTacToeInt(0x44000000).pendingLine shouldBe Some(true)
+        TicTacToeInt(0x40040000).pendingLine shouldBe Some(true)
+    }
+
+    ignore should "rowDiagPendingMatch(isPendingLine)" in {
+        TicTacToeInt(0x44000000).rowDiagPendingMatch(isPendingLine) shouldBe Some(true)
+        TicTacToeInt(0x40040000).rowDiagPendingMatch(isPendingLine) shouldBe Some(true)
+        TicTacToeInt(0x40040000).rowDiagPendingMatch(isPendingLine) shouldBe Some(true)
+        TicTacToeInt(0x40040000).rowDiagPendingMatch(isPendingLine) shouldBe Some(true)
+    }
+
+
 }

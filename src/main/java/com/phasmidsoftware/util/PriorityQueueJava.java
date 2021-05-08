@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 /**
- * An unbounded priority {@linkplain Queue queue} based on a priority heap.
+ * An unbounded min priority {@linkplain Queue queue} based on a priority heap.
  * The elements of the priority queue are ordered according to their
  * {@linkplain Comparable natural ordering}, or by a {@link Comparator}
  * provided at queue construction time, depending on which constructor is
@@ -360,7 +360,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      *                                  less than 1
      */
     public PriorityQueueJava(Comparator<? super E> comparator) {
-        this(0, comparator);
+        this(32, comparator);
     }
 
     /**
