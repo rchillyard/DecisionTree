@@ -28,7 +28,10 @@ case class Board(value: Int) extends AnyVal {
  */
 case class TicTacToe(board: Board, prior: TicTacToe = start) {
 
-  type Matching = Int => Row => Cell
+  /**
+   * Defines a Matching type which takes a Row and returns a Cell.
+   */
+  type Matching = Row => Cell
 
   /**
    * Method to determine which player was responsible for creating this state.
@@ -40,24 +43,21 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
   lazy val player: Boolean = (stride * stride - open.size) % 2 == 1
 
   /**
-   * Method to determine whether there is a line of marks.
+   * Method to determine whether there is a line of marks for one player.
    * The line may be horizontal (a row), vertical (a column) or diagonal.
    *
-   * @return true if there is a line of similar marks in this TicTacToe.
+   * @return Some(b) if there is a line of similar marks in this TicTacToe otherwise None.
+   *         The Boolean b is true for player X, and false for player 0.
    */
-  lazy val line: Cell = rowDiagMatch(isLine) orElse transpose.rowDiagMatch(isLine)
+  lazy val win: Cell = isWin(rowsR0) orElse isWin(rowsL0) orElse isWin(diagonals)
 
   /**
-   * Method to determine whether there is a line of marks.
-   * The line may be horizontal (a row), vertical (a column) or diagonal.
+   * Method to determine whether there is a potential win.
+   * The line may be horizontal (a row), vertical (a column) or diagonal and missing one element.
    *
-   * @return true if there is a line of similar marks in this TicTacToe.
+   * @return true if there is a line of two similar marks with a space between in this TicTacToe.
    */
-  lazy val pendingLine: Cell = (rowDiagPendingMatch(isPendingLine) & transpose.rowDiagPendingMatch(isPendingLine)) flatMap {
-    case 0 => Some(true)
-    case 1 => Some(false)
-    case _ => None
-  }
+  lazy val peneWin: Cell = isPendingWin(rowsR0) orElse isPendingWin(rowsL0) orElse isPendingWin(diagonals)
 
   /**
    * Method to create a new TicTacToe from this TicTacToe.
@@ -70,6 +70,11 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
   def play(xOrO: Boolean)(row: Int, col: Int): TicTacToe = TicTacToe(Board(TicTacToeOps.play(board.value, xOrO, row, col)), this)
 
   def render: String = s"${TicTacToeOps.render(board.value)} ($heuristic)"
+
+  lazy val history: List[String] = prior match {
+    case TicTacToe(Board(0), _) => List(render)
+    case x => x.history :+ render
+  }
 
   override def toString: String = s"${board.toHexString}"
 
@@ -98,10 +103,10 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
 
   private lazy val center = ((board.value ^ prior.board.value) & 0xC00000) != 0
 
-  private lazy val heuristic: Double = line match {
+  private lazy val heuristic: Double = win match {
     case Some(x) if x == player => 8
     case Some(x) if blocking(x) => 7
-    case _ => pendingLine // TODO we need to be able to distinguish a "fork" position from a single pendingLine
+    case _ => peneWin // TODO we need to be able to distinguish a "fork" position from a single peneWin
     match {
       case Some(x) if x == player => 6
       case _ if center => 3
@@ -110,14 +115,15 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
 
   }
 
-  lazy val transpose: TicTacToe = TicTacToe(board.transpose)
+  private def row(board: Board)(i: Int): Row = board.row(i)
 
-  // TODO make private once private method tester is working
-  private def row(i: Int): Row = board.row(i)
+  private def rows(board: Board): LazyList[Row] = LazyList.from(0).take(stride).map(i => row(board)(i))
 
-  private def rowDiagMatch(f: Row => Cell): Cell = LazyList.from(0).take(3).map(row).map(f).foldLeft[Cell](None)((r, c) => r orElse c) orElse diagMatch(f)
+  private def isMatch(f: Matching)(rs: LazyList[Row]): Cell = rs.map(f).foldLeft[Cell](None)((result, cell) => result orElse cell)
 
-  private def diagMatch(f: Row => Cell): Cell = f(diagR)
+  private def isWin(rs: LazyList[Row]): Cell = isMatch(isLine)(rs)
+
+  private def isPendingWin(rs: LazyList[Row]): Cell = isMatch(isLinePending)(rs)
 
   private def isLine(x: Row): Cell = rowLine(x) match {
     case 1 => Some(true)
@@ -125,30 +131,36 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
     case _ => None
   }
 
+  private def isLinePending(x: Row): Cell = rowLinePending(x) match {
+      case 1 => Some(true)
+      case 2 => Some(false)
+      case _ => None
+    }
+
   import com.phasmidsoftware.util.Flog._
 
   implicit val optionLoggable: Loggable[Option[Int]] = new Loggables {}.optionLoggable[Int]
 
-  def rowDiagPendingMatch(f: Row => Option[Int]): Option[Int] = s"rowDiagPendingMatch: $board" !!
-          LazyList.from(0).take(3).map(row).map(f).foldLeft[Option[Int]](None)((r, c) => r & c) & diagPendingMatch(f)
+  private lazy val r0: Board = board
+  private lazy val l0: Board = Board(transposeBoard(board.value))
+  private lazy val r1: Board = Board(rotate(r0.value))
+  private lazy val l1: Board = Board(rotate(l0.value))
+  private lazy val r2: Board = Board(rotate(r1.value))
+  private lazy val l2: Board = Board(rotate(l1.value))
+  private lazy val r3: Board = Board(rotate(r2.value))
+  private lazy val l3: Board = Board(rotate(l2.value))
+  private lazy val rowsR0: LazyList[Row] = rows(r0)
+  private lazy val rowsL0: LazyList[Row] = rows(l0)
+  private lazy val rowsR1: LazyList[Row] = rows(r1)
+  private lazy val rowsL1: LazyList[Row] = rows(l1)
+  private lazy val rowsR2: LazyList[Row] = rows(r2)
+  private lazy val rowsL2: LazyList[Row] = rows(l2)
+  private lazy val rowsR3: LazyList[Row] = rows(r3)
+  private lazy val rowsL3: LazyList[Row] = rows(l3)
+  private lazy val diagR: Row = diagonal(r0.value)
+  private lazy val diagL: Row = diagonal(l0.value)
+  private lazy val diagonals: LazyList[Row] = diagR #:: diagL #:: LazyList.empty
 
-  def isPendingLine(x: Row): Option[Int] =
-    rowLinePending(TicTacToeOps.row(board.value, x)) match {
-      case 1 => Some(0)
-      case 2 => Some(1)
-      case _ => None
-    }
-
-  private def diagPendingMatch(f: Row => Option[Int]): Option[Int] = f(diagR) orElse f(diagL)
-
-  private lazy val row0: Row = row(0)
-  private lazy val row1: Row = row(1)
-  private lazy val row2: Row = row(2)
-  private lazy val col0: Row = transpose.row(0)
-  private lazy val col1: Row = transpose.row(1)
-  private lazy val col2: Row = transpose.row(2)
-  private lazy val diagR: Row = diagonal(board.value)
-  private lazy val diagL: Row = diagonal(hFlip(board.value))
 }
 
 object TicTacToe {
@@ -210,7 +222,7 @@ object TicTacToe {
      * @return a Cell: if None then this state is not a goal state.
      *         If Some(b) then we got a result and the winner is the antagonist who moves first.
      */
-    def isGoal(s: TicTacToe): Cell = s.line
+    def isGoal(s: TicTacToe): Cell = s.win
 
     /**
      * Return all of the possible moves from the given state.

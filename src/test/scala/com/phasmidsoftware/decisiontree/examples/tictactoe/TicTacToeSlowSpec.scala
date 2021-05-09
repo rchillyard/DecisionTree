@@ -64,7 +64,7 @@ class TicTacToeSlowSpec extends AnyFlatSpec with should.Matchers {
         TicTacToeSlow.parse("          ") should matchPattern { case Failure(_) => }
     }
 
-    it should "line row" in {
+    it should "win row" in {
         TicTacToeSlow.parse("XXX      ").get.line shouldBe Some(true)
         TicTacToeSlow.parse("   XXX   ").get.line shouldBe Some(true)
         TicTacToeSlow.parse("      XXX").get.line shouldBe Some(true)
@@ -72,14 +72,14 @@ class TicTacToeSlowSpec extends AnyFlatSpec with should.Matchers {
         TicTacToeSlow.parse("000   X  ").get.line shouldBe Some(false)
     }
 
-    it should "line col" in {
+    it should "win col" in {
         TicTacToeSlow.parse("X  X  X  ").get.line shouldBe Some(true)
         TicTacToeSlow.parse(" X 0X  X ").get.line shouldBe Some(true)
         TicTacToeSlow.parse("0 X  X  X").get.line shouldBe Some(true)
         TicTacToeSlow.parse("0 X 0X  0").get.line shouldBe Some(false)
     }
 
-    it should "line diag" in {
+    it should "win diag" in {
         TicTacToeSlow.parse("XXX     0").get.line shouldBe Some(true)
         TicTacToeSlow.parse("   XXX0  ").get.line shouldBe Some(true)
         TicTacToeSlow.parse(" 0    XXX").get.line shouldBe Some(true)

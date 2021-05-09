@@ -168,8 +168,8 @@ public class TicTacToeOps {
      */
     public static int rowLinePending(int x) {
         return switch (x) {
-            case 0x11, 0x14, 0x05 -> 1;
-            case 0x22, 0x28, 0x0A -> 2;
+            case 0x11, 0x14, 0x05 -> 1; // XX. X.X .XX
+            case 0x22, 0x28, 0x0A -> 2; // 00. 0.0 .00
             default -> 0;
         };
     }

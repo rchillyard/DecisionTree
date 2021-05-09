@@ -1,6 +1,5 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.start.isPendingLine
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.{parseString, stride}
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import org.scalatest.PrivateMethodTester
@@ -91,11 +90,6 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         transposeBoard(0xF0000000) shouldBe 0xC3000000
         transposeBoard(0x03C00000) shouldBe 0x30c00000
     }
-    it should "transpose String" in {
-        val triedInt = TicTacToe.parse("X  X  X  ")
-        triedInt.map(x => x.transpose).get.render shouldBe "XXX\n...\n...\n (8.0)"
-        transposeBoard(0x03C00000) shouldBe 0x30c00000
-    }
     it should "get rows" in {
         row(0xC0000000, 0) shouldBe 0x30
         row(0x03000000, 1) shouldBe 0x30
@@ -133,7 +127,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     behavior of "TicTacToe"
-    it should "row" in {
+    ignore should "row" in {
         val ty: Try[TicTacToe] = TicTacToe.parse("X   X   X")
         val rowMethod = PrivateMethod[Int](Symbol("row"))
         val invokeRow: Int => TicTacToe => Int = x => t => t invokePrivate rowMethod(x)
@@ -185,37 +179,28 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         TicTacToe.parse("          ") should matchPattern { case Failure(_) => }
     }
 
-    it should "line row" in {
-        TicTacToe.parse("XXX      ").get.line shouldBe Some(true)
-        TicTacToe.parse("   XXX   ").get.line shouldBe Some(true)
-        TicTacToe.parse("      XXX").get.line shouldBe Some(true)
-        TicTacToe.parse("0     XXX").get.line shouldBe Some(true)
-        TicTacToe.parse("000   X  ").get.line shouldBe Some(false)
+    it should "win row" in {
+        TicTacToe.parse("XXX      ").get.win shouldBe Some(true)
+        TicTacToe.parse("   XXX   ").get.win shouldBe Some(true)
+        TicTacToe.parse("      XXX").get.win shouldBe Some(true)
+        TicTacToe.parse("0     XXX").get.win shouldBe Some(true)
+        TicTacToe.parse("000   X  ").get.win shouldBe Some(false)
     }
 
-    it should "line col" in {
-        TicTacToe.parse("X  X  X  ").get.line shouldBe Some(true)
-        TicTacToe.parse(" X 0X  X ").get.line shouldBe Some(true)
-        TicTacToe.parse("0 X  X  X").get.line shouldBe Some(true)
+    it should "win col" in {
+        TicTacToe.parse("X  X  X  ").get.win shouldBe Some(true)
+        TicTacToe.parse(" X 0X  X ").get.win shouldBe Some(true)
+        TicTacToe.parse("0 X  X  X").get.win shouldBe Some(true)
     }
 
-    it should "line diag" in {
-        TicTacToe.parse("XXX     0").get.line shouldBe Some(true)
-        TicTacToe.parse("   XXX0  ").get.line shouldBe Some(true)
-        TicTacToe.parse(" 0    XXX").get.line shouldBe Some(true)
+    it should "win diag" in {
+        TicTacToe.parse("XXX     0").get.win shouldBe Some(true)
+        TicTacToe.parse("   XXX0  ").get.win shouldBe Some(true)
+        TicTacToe.parse(" 0    XXX").get.win shouldBe Some(true)
     }
 
-    ignore should "pendingLine" in {
-        TicTacToe.from(0x44000000).pendingLine shouldBe Some(true)
-        TicTacToe.from(0x40040000).pendingLine shouldBe Some(true)
+    ignore should "peneWin" in {
+        TicTacToe.from(0x44000000).peneWin shouldBe Some(true)
+        TicTacToe.from(0x40040000).peneWin shouldBe Some(true)
     }
-
-    ignore should "rowDiagPendingMatch(isPendingLine)" in {
-        TicTacToe.from(0x44000000).rowDiagPendingMatch(isPendingLine) shouldBe Some(true)
-        TicTacToe.from(0x40040000).rowDiagPendingMatch(isPendingLine) shouldBe Some(true)
-        TicTacToe.from(0x40040000).rowDiagPendingMatch(isPendingLine) shouldBe Some(true)
-        TicTacToe.from(0x40040000).rowDiagPendingMatch(isPendingLine) shouldBe Some(true)
-    }
-
-
 }
