@@ -2,9 +2,9 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.stride
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.start
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeIntOperations._
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.{DecisionTreeException, Loggable, Loggables, Shuffle}
-
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -17,17 +17,19 @@ case class Board(value: Int) extends AnyVal {
 
   def toHexString: String = value.toHexString
 
-  def transpose: Board = Board(TicTacToeIntOperations.transposeBoard(value))
+  def transpose: Board = Board(transposeBoard(value))
 }
 
-/**
- * This class represents just a row of 3 x 2 bits at the low end of the 32-bit word.
- *
- * @param value the bit value of this row.
- */
-case class Row(value: Int) extends AnyVal
+///**
+// * This class represents just a row of 3 x 2 bits at the low end of the 32-bit word.
+// *
+// * @param value the bit value of this row.
+// */
+//case class Row(value: Int) extends AnyVal
 
 case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
+
+  type Matching = Int => Row => Cell
 
   /**
    * Method to determine which player was responsible for creating this state.
@@ -45,9 +47,6 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
    * @return true if there is a line of similar marks in this TicTacToe.
    */
   lazy val line: Cell = rowDiagMatch(isLine) orElse transpose.rowDiagMatch(isLine)
-
-  // TODO make private once private method tester is working
-  def row(i: Int): Row = board.row(i)
 
   /**
    * Method to determine whether there is a line of marks.
@@ -112,13 +111,16 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
 
   }
 
-  def transpose: TicTacToeInt = TicTacToeInt(board.transpose)
+  lazy val transpose: TicTacToeInt = TicTacToeInt(board.transpose)
+
+  // TODO make private once private method tester is working
+  private def row(i: Int): Row = board.row(i)
 
   private def rowDiagMatch(f: Row => Cell): Cell = LazyList.from(0).take(3).map(row).map(f).foldLeft[Cell](None)((r, c) => r orElse c) orElse diagMatch(f)
 
-  private def diagMatch(f: Row => Cell): Cell = f(TicTacToeIntOperations.diagonal(board.value))
+  private def diagMatch(f: Row => Cell): Cell = f(diagR)
 
-  private def isLine(x: Row): Cell = TicTacToeIntOperations.rowLine(x) match {
+  private def isLine(x: Row): Cell = rowLine(x) match {
     case 1 => Some(true)
     case 2 => Some(false)
     case _ => None
@@ -129,33 +131,62 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
   implicit val optionLoggable: Loggable[Option[Int]] = new Loggables {}.optionLoggable[Int]
 
   def rowDiagPendingMatch(f: Row => Option[Int]): Option[Int] = s"rowDiagPendingMatch: $board" !!
-    LazyList.from(0).take(3).map(row).map(f).foldLeft[Option[Int]](None)((r, c) => r & c) & diagPendingMatch(f)
+          LazyList.from(0).take(3).map(row).map(f).foldLeft[Option[Int]](None)((r, c) => r & c) & diagPendingMatch(f)
 
   def isPendingLine(x: Row): Option[Int] =
-    TicTacToeIntOperations.rowLinePending(TicTacToeIntOperations.row(board.value, x)) match {
+    rowLinePending(TicTacToeIntOperations.row(board.value, x)) match {
       case 1 => Some(0)
       case 2 => Some(1)
       case _ => None
     }
 
-  private def diagPendingMatch(f: Row => Option[Int]): Option[Int] = f(TicTacToeIntOperations.diagonal(board.value))
+  private def diagPendingMatch(f: Row => Option[Int]): Option[Int] = f(diagR) orElse f(diagL)
+
+  private lazy val row0: Row = row(0)
+  private lazy val row1: Row = row(1)
+  private lazy val row2: Row = row(2)
+  private lazy val col0: Row = transpose.row(0)
+  private lazy val col1: Row = transpose.row(1)
+  private lazy val col2: Row = transpose.row(2)
+  private lazy val diagR: Row = diagonal(board.value)
+  private lazy val diagL: Row = diagonal(hFlip(board.value))
 }
 
 object TicTacToeInt {
+  // XXX the size of the TicTacToe square.
   val stride = 3
 
+  // XXX the starting position (all nine empty cells).
   val start: TicTacToeInt = apply()
 
+  /**
+   * Method to construct a starting position TicTacToeInt.
+   *
+   * @return a TicTacToeInt with all empty cells.
+   */
   def apply(): TicTacToeInt = apply(Board(0))
 
-  //  def apply(b: Board): TicTacToeInt = TicTacToeInt(b)
-
+  /**
+   * Method to construct a TicTacToeInt from a particular bit pattern.
+   * NOTE there will not be a valid "prior" (it will just tbe starting pattern).
+   *
+   * @return a TicTacToeInt with all empty cells.
+   */
   def from(x: Int): TicTacToeInt = TicTacToeInt(Board(x))
 
+  /**
+   * Method to parse a String of Xs and 0s into a TicTacToeInt, wrapped in Try.
+   *
+   * @param s the String to parse.
+   * @return a Try of TicTacToeInt.
+   */
   def parse(s: String): Try[TicTacToeInt] =
     if (s.length == stride * stride) Success(parseString(s))
     else Failure(DecisionTreeException(s"TicTacToeInt: parse failure: $s"))
 
+  /**
+   * Trait which extends the type class State with a concrete underlying type of TicTacToeInt.
+   */
   trait TicTacToeIntState extends State[TicTacToeInt] {
     /**
      * In this game, all states are valid.

@@ -6,7 +6,6 @@ import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeIntOperation
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-
 import scala.util.{Failure, Success, Try}
 
 class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
@@ -28,6 +27,43 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers with PrivateMeth
         render(board2) shouldBe "X..\n...\n0..\n"
         board2 shouldBe 0x40080000
     }
+    // CONSIDER skipping the toHexString part
+    it should "hFlip to hex string" in {
+        hFlip(0xC0000000).toHexString shouldBe "c0000"
+        hFlip(0x30000000).toHexString shouldBe "30000"
+        hFlip(0x0C000000).toHexString shouldBe "c000"
+        hFlip(0x03000000).toHexString shouldBe "3000000"
+        hFlip(0x00C00000).toHexString shouldBe "c00000"
+        hFlip(0x00300000).toHexString shouldBe "300000"
+        hFlip(0x000C0000).toHexString shouldBe "c0000000"
+        hFlip(0x00030000).toHexString shouldBe "30000000"
+        hFlip(0x0000C000).toHexString shouldBe "c000000"
+    }
+    // CONSIDER skipping the toHexString part
+    it should "rotate to hex string" in {
+        rotate(0xC0000000).toHexString shouldBe "c000000"
+        rotate(0x30000000).toHexString shouldBe "300000"
+        rotate(0x0C000000).toHexString shouldBe "c000"
+        rotate(0x03000000).toHexString shouldBe "30000000"
+        rotate(0x00C00000).toHexString shouldBe "c00000"
+        rotate(0x00300000).toHexString shouldBe "30000"
+        rotate(0x000C0000).toHexString shouldBe "c0000000"
+        rotate(0x00030000).toHexString shouldBe "3000000"
+        rotate(0x0000C000).toHexString shouldBe "c0000"
+    }
+    it should "transpose to Int using hFlip and rotate" in {
+        rotate(hFlip(0xC0000000)) shouldBe 0xC0000000
+        rotate(hFlip(0x30000000)) shouldBe 0x03000000
+        rotate(hFlip(0x0C000000)) shouldBe 0x000C0000
+        rotate(hFlip(0x03000000)) shouldBe 0x30000000
+        rotate(hFlip(0x00C00000)) shouldBe 0xc00000
+        rotate(hFlip(0x00300000)) shouldBe 0x30000
+        rotate(hFlip(0x000C0000)) shouldBe 0xc000000
+        rotate(hFlip(0x00030000)) shouldBe 0x300000
+        rotate(hFlip(0x0000C000)) shouldBe 0xc000
+        rotate(hFlip(0x44000000)) shouldBe 0x40040000
+
+    }
     it should "transpose to Int" in {
         transposeBoard(0xC0000000) shouldBe 0xC0000000
         transposeBoard(0x30000000) shouldBe 0x03000000
@@ -39,7 +75,6 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers with PrivateMeth
         transposeBoard(0x00030000) shouldBe 0x300000
         transposeBoard(0x0000C000) shouldBe 0xc000
         transposeBoard(0x44000000) shouldBe 0x40040000
-
     }
     it should "transpose to hex string" in {
         transposeBoard(0xC0000000).toHexString shouldBe "c0000000"
@@ -100,9 +135,8 @@ class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers with PrivateMeth
     behavior of "TicTacToeInt"
     it should "row" in {
         val ty: Try[TicTacToeInt] = TicTacToeInt.parse("X   X   X")
-        //        val rowMethod = PrivateMethod[Int](Symbol("row"))
-        //        val invokeRow:  Int => TicTacToeInt => Int = x => t =>  t invokePrivate rowMethod(x)
-        val invokeRow: Int => TicTacToeInt => Row = x => t => t.row(x)
+        val rowMethod = PrivateMethod[Int](Symbol("row"))
+        val invokeRow: Int => TicTacToeInt => Int = x => t => t invokePrivate rowMethod(x)
         ty.map(invokeRow(0)) should matchPattern { case Success(16) => }
         ty.map(invokeRow(1)) should matchPattern { case Success(4) => }
         ty.map(invokeRow(2)) should matchPattern { case Success(1) => }
