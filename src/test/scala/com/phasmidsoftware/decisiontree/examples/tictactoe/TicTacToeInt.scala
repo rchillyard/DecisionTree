@@ -1,8 +1,8 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.stride
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.start
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeIntOperations._
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeSlow.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.{DecisionTreeException, Loggable, Loggables, Shuffle}
 import scala.util.{Failure, Success, Try}
@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
  * @param value the bit value of this row.
  */
 case class Board(value: Int) extends AnyVal {
-  def row(i: Int): Row = TicTacToeIntOperations.row(value, i)
+  def row(i: Int): Row = TicTacToeOps.row(value, i)
 
   def toHexString: String = value.toHexString
 
@@ -68,9 +68,9 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
    * @param col  the column at which the mark should be made.
    * @return a new TicTacToe with the appropriate Cell marked.
    */
-  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToeInt = TicTacToeInt(Board(TicTacToeIntOperations.play(board.value, xOrO, row, col)), this)
+  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToeInt = TicTacToeInt(Board(TicTacToeOps.play(board.value, xOrO, row, col)), this)
 
-  def render: String = s"${TicTacToeIntOperations.render(board.value)} ($heuristic)"
+  def render: String = s"${TicTacToeOps.render(board.value)} ($heuristic)"
 
   override def toString: String = s"${board.toHexString}"
 
@@ -80,7 +80,7 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
    * @return a sequence of (Int, Int) tuples corresponding to the row, column indices.
    */
   lazy val open: Seq[(Int, Int)] = {
-    val zs: Array[Int] = TicTacToeIntOperations.open(board.value)
+    val zs: Array[Int] = TicTacToeOps.open(board.value)
     val q = for (z <- zs) yield z / stride -> z % stride
     q.toList // CONSIDER returning q as is.
   }
@@ -134,7 +134,7 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
           LazyList.from(0).take(3).map(row).map(f).foldLeft[Option[Int]](None)((r, c) => r & c) & diagPendingMatch(f)
 
   def isPendingLine(x: Row): Option[Int] =
-    rowLinePending(TicTacToeIntOperations.row(board.value, x)) match {
+    rowLinePending(TicTacToeOps.row(board.value, x)) match {
       case 1 => Some(0)
       case 2 => Some(1)
       case _ => None
@@ -243,7 +243,7 @@ object TicTacToeInt {
       case '0' | 'o' | 'O' => 2
       case x => throw DecisionTreeException(s"TicTacToeInt: illegal character: $x")
     }
-    if (cells.length >= 9) TicTacToeInt(Board(TicTacToeIntOperations.parse(cells.toArray)))
+    if (cells.length >= 9) TicTacToeInt(Board(TicTacToeOps.parse(cells.toArray)))
     else throw DecisionTreeException("insufficient elements")
   }
 }

@@ -1,7 +1,7 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe;
 
 @SuppressWarnings("CommentedOutCode")
-public class TicTacToeIntOperations {
+public class TicTacToeOps {
 
     /**
      * Parse and array of ints, each one either 0 (open), 1 (X), or 2 (0).

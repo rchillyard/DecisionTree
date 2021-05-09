@@ -2,7 +2,7 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.start.isPendingLine
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.{parseString, stride}
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeIntOperations._
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -10,12 +10,12 @@ import scala.util.{Failure, Success, Try}
 
 class TicTacToeIntSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
 
-    behavior of "TicTacToeIntOperations"
+    behavior of "TicTacToeOps"
     it should "open" in {
-        TicTacToeIntOperations.open(0) shouldBe Array(0, 1, 2, 3, 4, 5, 6, 7, 8)
-        TicTacToeIntOperations.open(0x40000000) shouldBe Array(1, 2, 3, 4, 5, 6, 7, 8)
-        TicTacToeIntOperations.open(0x0C000000) shouldBe Array(0, 1, 2, 3, 4, 5, 6, 7, 8)
-        TicTacToeIntOperations.open(0x40400000) shouldBe Array(1, 2, 3, 5, 6, 7, 8)
+        TicTacToeOps.open(0) shouldBe Array(0, 1, 2, 3, 4, 5, 6, 7, 8)
+        TicTacToeOps.open(0x40000000) shouldBe Array(1, 2, 3, 4, 5, 6, 7, 8)
+        TicTacToeOps.open(0x0C000000) shouldBe Array(0, 1, 2, 3, 4, 5, 6, 7, 8)
+        TicTacToeOps.open(0x40400000) shouldBe Array(1, 2, 3, 5, 6, 7, 8)
     }
     it should "render" in {
         render(0x40000000) shouldBe "X..\n...\n...\n"

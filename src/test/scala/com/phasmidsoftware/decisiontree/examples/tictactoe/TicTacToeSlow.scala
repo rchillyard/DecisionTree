@@ -1,12 +1,11 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.stride
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeSlow.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
-
 import scala.util.{Failure, Success, Try}
 
-case class TicTacToe(board: Seq[Seq[Cell]]) {
+case class TicTacToeSlow(board: Seq[Seq[Cell]]) {
 
   /**
    * Method to determine which player was responsible for creating this state.
@@ -21,7 +20,7 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
    * Method to determine whether there is a line of marks.
    * The line may be horizontal (a row), vertical (a column) or diagonal.
    *
-   * @return true if there is a line of similar marks in this TicTacToe.
+   * @return true if there is a line of similar marks in this TicTacToeSlow.
    */
   lazy val line: Cell = rowMatch orElse colMatch orElse diagMatch
 
@@ -30,19 +29,19 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
    * The line may be horizontal (a row), vertical (a column) or diagonal.
    *
    * @param player true for X, false for 0.
-   * @return true if there is a line of player's marks in this TicTacToe.
+   * @return true if there is a line of player's marks in this TicTacToeSlow.
    */
   def potentialLine(player: Boolean): Boolean = rowMajority(player) || colMajority(player) || diagMajority(player)
 
   /**
-   * Method to create a new TicTacToe from this TicTacToe.
+   * Method to create a new TicTacToeSlow from this TicTacToeSlow.
    *
    * @param xOrO true if X is to play, false otherwise.
    * @param row  the row at which the mark should be made.
    * @param col  the column at which the mark should be made.
-   * @return a new TicTacToe with the appropriate Cell marked.
+   * @return a new TicTacToeSlow with the appropriate Cell marked.
    */
-  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToe = TicTacToe(playBoard(xOrO)(row, col))
+  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToeSlow = TicTacToeSlow(playBoard(xOrO)(row, col))
 
   override def toString: String = {
     val sb = new StringBuilder
@@ -85,10 +84,10 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
     for (i <- 0 until stride) yield board(i)(i)
   else
     for (i <- 0 until stride) yield board(stride - i - 1)(i)
-    ).toList
+          ).toList
 
-  val playX: (Int, Int) => TicTacToe = play(xOrO = true)
-  val play0: (Int, Int) => TicTacToe = play(xOrO = false)
+  val playX: (Int, Int) => TicTacToeSlow = play(xOrO = true)
+  val play0: (Int, Int) => TicTacToeSlow = play(xOrO = false)
 
   /**
    * Function to render a Cell.
@@ -134,39 +133,39 @@ case class TicTacToe(board: Seq[Seq[Cell]]) {
   private def diagMajority(player: Boolean): Boolean = majority(diagonal(true).toList)(player) || majority(diagonal(false).toList)(player)
 }
 
-object TicTacToe {
+object TicTacToeSlow {
   val stride = 3
 
   val empty: Seq[Seq[Cell]] = List.fill(stride)(List.fill(stride)(None))
 
-  val start: TicTacToe = apply()
+  val start: TicTacToeSlow = apply()
 
-  def apply(): TicTacToe = apply(empty)
+  def apply(): TicTacToeSlow = apply(empty)
 
-  private def parseString(s: String): TicTacToe = {
+  private def parseString(s: String): TicTacToeSlow = {
     val chars = s.toCharArray.toList
     val cells: Seq[Cell] = chars map {
       case ' ' => None
       case 'X' => Some(true)
       case '0' => Some(false)
-      case x => throw DecisionTreeException(s"TicTacToe: illegal character: $x")
+      case x => throw DecisionTreeException(s"TicTacToeSlow: illegal character: $x")
     }
     val board: Seq[Seq[Cell]] = cells.grouped(stride).toList
-    TicTacToe(board)
+    TicTacToeSlow(board)
   }
 
-  def parse(s: String): Try[TicTacToe] =
+  def parse(s: String): Try[TicTacToeSlow] =
     if (s.length == stride * stride) Success(parseString(s))
-    else Failure(DecisionTreeException(s"TicTacToe: parse failure: $s"))
+    else Failure(DecisionTreeException(s"TicTacToeSlow: parse failure: $s"))
 
-  trait TicTacToeState extends State[TicTacToe] {
+  trait TicTacToeState extends State[TicTacToeSlow] {
     /**
      * In this game, all states are valid.
      *
      * @param s a state.
      * @return true.
      */
-    def isValid(s: TicTacToe): Boolean = true
+    def isValid(s: TicTacToeSlow): Boolean = true
 
     /**
      * How close are we to winning?
@@ -174,7 +173,7 @@ object TicTacToe {
      * @param s a state.
      * @return the number of our aligned cells - their aligned cells.
      */
-    def heuristic(s: TicTacToe): Double = s.heuristic
+    def heuristic(s: TicTacToeSlow): Double = s.heuristic
 
     /**
      * Have we reached a result? And, if so, who won?
@@ -183,7 +182,7 @@ object TicTacToe {
      * @return an Option of Boolean: if None then this state is not a goal state.
      *         If Some(b) then we got a result and the winner is the antagonist who moves first.
      */
-    def isGoal(s: TicTacToe): Option[Boolean] = s.line
+    def isGoal(s: TicTacToeSlow): Option[Boolean] = s.line
 
     /**
      * Return all of the possible moves from the given state.
@@ -191,10 +190,10 @@ object TicTacToe {
      * @param s a state.
      * @return a sequence of Transition[S]
      */
-    def moves(s: TicTacToe): Seq[Transition[TicTacToe]] = {
+    def moves(s: TicTacToeSlow): Seq[Transition[TicTacToeSlow]] = {
       val zs: Seq[(Int, Int)] = Shuffle(s.open, 3L) // we arbitrarily always want X to win
-      val f: TicTacToe => (Int, Int) => TicTacToe = t => if (s.player) t.play0 else t.playX
-      for (z <- zs) yield Move[TicTacToe](x => f(x)(z._1, z._2), z.toString())
+      val f: TicTacToeSlow => (Int, Int) => TicTacToeSlow = t => if (s.player) t.play0 else t.playX
+      for (z <- zs) yield Move[TicTacToeSlow](x => f(x)(z._1, z._2), z.toString())
     }
   }
 
