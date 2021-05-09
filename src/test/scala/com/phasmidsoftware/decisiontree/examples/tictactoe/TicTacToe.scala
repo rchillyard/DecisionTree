@@ -1,6 +1,6 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeInt.start
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.start
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeSlow.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
@@ -20,14 +20,13 @@ case class Board(value: Int) extends AnyVal {
   def transpose: Board = Board(transposeBoard(value))
 }
 
-///**
-// * This class represents just a row of 3 x 2 bits at the low end of the 32-bit word.
-// *
-// * @param value the bit value of this row.
-// */
-//case class Row(value: Int) extends AnyVal
-
-case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
+/**
+ * Case class to represent a TicTacToe situation.
+ *
+ * @param board the current layout.
+ * @param prior the prior situation.
+ */
+case class TicTacToe(board: Board, prior: TicTacToe = start) {
 
   type Matching = Int => Row => Cell
 
@@ -68,7 +67,7 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
    * @param col  the column at which the mark should be made.
    * @return a new TicTacToe with the appropriate Cell marked.
    */
-  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToeInt = TicTacToeInt(Board(TicTacToeOps.play(board.value, xOrO, row, col)), this)
+  def play(xOrO: Boolean)(row: Int, col: Int): TicTacToe = TicTacToe(Board(TicTacToeOps.play(board.value, xOrO, row, col)), this)
 
   def render: String = s"${TicTacToeOps.render(board.value)} ($heuristic)"
 
@@ -85,13 +84,13 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
     q.toList // CONSIDER returning q as is.
   }
 
-  val playX: (Int, Int) => TicTacToeInt = play(xOrO = true)
-  val play0: (Int, Int) => TicTacToeInt = play(xOrO = false)
+  val playX: (Int, Int) => TicTacToe = play(xOrO = true)
+  val play0: (Int, Int) => TicTacToe = play(xOrO = false)
 
   override def hashCode(): Int = board.hashCode()
 
   override def equals(obj: Any): Boolean = obj match {
-    case TicTacToeInt(b, _) => board == b
+    case TicTacToe(b, _) => board == b
     case _ => false
   }
 
@@ -111,7 +110,7 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
 
   }
 
-  lazy val transpose: TicTacToeInt = TicTacToeInt(board.transpose)
+  lazy val transpose: TicTacToe = TicTacToe(board.transpose)
 
   // TODO make private once private method tester is working
   private def row(i: Int): Row = board.row(i)
@@ -152,49 +151,49 @@ case class TicTacToeInt(board: Board, prior: TicTacToeInt = start) {
   private lazy val diagL: Row = diagonal(hFlip(board.value))
 }
 
-object TicTacToeInt {
+object TicTacToe {
   // XXX the size of the TicTacToe square.
   val stride = 3
 
   // XXX the starting position (all nine empty cells).
-  val start: TicTacToeInt = apply()
+  val start: TicTacToe = apply()
 
   /**
-   * Method to construct a starting position TicTacToeInt.
+   * Method to construct a starting position TicTacToe.
    *
-   * @return a TicTacToeInt with all empty cells.
+   * @return a TicTacToe with all empty cells.
    */
-  def apply(): TicTacToeInt = apply(Board(0))
+  def apply(): TicTacToe = apply(Board(0))
 
   /**
-   * Method to construct a TicTacToeInt from a particular bit pattern.
+   * Method to construct a TicTacToe from a particular bit pattern.
    * NOTE there will not be a valid "prior" (it will just tbe starting pattern).
    *
-   * @return a TicTacToeInt with all empty cells.
+   * @return a TicTacToe with all empty cells.
    */
-  def from(x: Int): TicTacToeInt = TicTacToeInt(Board(x))
+  def from(x: Int): TicTacToe = TicTacToe(Board(x))
 
   /**
-   * Method to parse a String of Xs and 0s into a TicTacToeInt, wrapped in Try.
+   * Method to parse a String of Xs and 0s into a TicTacToe, wrapped in Try.
    *
    * @param s the String to parse.
-   * @return a Try of TicTacToeInt.
+   * @return a Try of TicTacToe.
    */
-  def parse(s: String): Try[TicTacToeInt] =
+  def parse(s: String): Try[TicTacToe] =
     if (s.length == stride * stride) Success(parseString(s))
-    else Failure(DecisionTreeException(s"TicTacToeInt: parse failure: $s"))
+    else Failure(DecisionTreeException(s"TicTacToe: parse failure: $s"))
 
   /**
-   * Trait which extends the type class State with a concrete underlying type of TicTacToeInt.
+   * Trait which extends the type class State with a concrete underlying type of TicTacToe.
    */
-  trait TicTacToeIntState extends State[TicTacToeInt] {
+  trait TicTacToeIntState extends State[TicTacToe] {
     /**
      * In this game, all states are valid.
      *
      * @param s a state.
      * @return true.
      */
-    def isValid(s: TicTacToeInt): Boolean = true
+    def isValid(s: TicTacToe): Boolean = true
 
     /**
      * How close are we to winning?
@@ -202,7 +201,7 @@ object TicTacToeInt {
      * @param s a state.
      * @return the number of our aligned cells - their aligned cells.
      */
-    def heuristic(s: TicTacToeInt): Double = s.heuristic
+    def heuristic(s: TicTacToe): Double = s.heuristic
 
     /**
      * Have we reached a result? And, if so, who won?
@@ -211,7 +210,7 @@ object TicTacToeInt {
      * @return a Cell: if None then this state is not a goal state.
      *         If Some(b) then we got a result and the winner is the antagonist who moves first.
      */
-    def isGoal(s: TicTacToeInt): Cell = s.line
+    def isGoal(s: TicTacToe): Cell = s.line
 
     /**
      * Return all of the possible moves from the given state.
@@ -219,10 +218,10 @@ object TicTacToeInt {
      * @param s a state.
      * @return a sequence of Transition[S]
      */
-    def moves(s: TicTacToeInt): Seq[Transition[TicTacToeInt]] = {
+    def moves(s: TicTacToe): Seq[Transition[TicTacToe]] = {
       val zs: Seq[(Int, Int)] = Shuffle(s.open, 3L) // we arbitrarily always want X to win
-      val f: TicTacToeInt => (Int, Int) => TicTacToeInt = t => if (s.player) t.play0 else t.playX
-      for (z <- zs) yield Move[TicTacToeInt](x => f(x)(z._1, z._2), z.toString())
+      val f: TicTacToe => (Int, Int) => TicTacToe = t => if (s.player) t.play0 else t.playX
+      for (z <- zs) yield Move[TicTacToe](x => f(x)(z._1, z._2), z.toString())
     }
   }
 
@@ -234,17 +233,23 @@ object TicTacToeInt {
    *
    * @param s a String made up of 9 case-independent characters, each of which must be an X, 0, O, ., or space.
    *          CONSIDER allowing newlines.
-   * @return a TicTacToeInt.
+   * @return a TicTacToe.
    */
-  def parseString(s: String): TicTacToeInt = {
+  def parseString(s: String): TicTacToe = {
     val cells = s.toCharArray.toSeq map {
       case ' ' | '.' => 0
       case 'X' | 'x' => 1
       case '0' | 'o' | 'O' => 2
-      case x => throw DecisionTreeException(s"TicTacToeInt: illegal character: $x")
+      case x => throw DecisionTreeException(s"TicTacToe: illegal character: $x")
     }
-    if (cells.length >= 9) TicTacToeInt(Board(TicTacToeOps.parse(cells.toArray)))
+    if (cells.length >= 9) TicTacToe(Board(TicTacToeOps.parse(cells.toArray)))
     else throw DecisionTreeException("insufficient elements")
   }
 }
 
+///**
+// * This class represents just a row of 3 x 2 bits at the low end of the 32-bit word.
+// *
+// * @param value the bit value of this row.
+// */
+//case class Row(value: Int) extends AnyVal
