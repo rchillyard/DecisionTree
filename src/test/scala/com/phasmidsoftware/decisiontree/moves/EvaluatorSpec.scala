@@ -16,10 +16,8 @@ class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
     val so: Option[TicTacToe] = eval.evaluate(start)
     so should matchPattern { case Some(_) => }
     val s = so.get
-    println(s.history.mkString("", "\n------\n", ""))
-    // XXX this should be a draw.
-    // TODO resurrect this next line
-    //        implicitly[State[TicTacToe]].isGoal(s) shouldBe Some(false)
+//    println(s.history.mkString("", "\n------\n", ""))
+    implicitly[State[TicTacToe]].isGoal(s) shouldBe Some(false)
   }
 
 }
