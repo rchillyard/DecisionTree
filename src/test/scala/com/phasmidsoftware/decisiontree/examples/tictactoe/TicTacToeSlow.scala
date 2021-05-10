@@ -3,6 +3,7 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeSlow.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
+
 import scala.util.{Failure, Success, Try}
 
 case class TicTacToeSlow(board: Seq[Seq[Cell]]) {
@@ -158,7 +159,7 @@ object TicTacToeSlow {
     if (s.length == stride * stride) Success(parseString(s))
     else Failure(DecisionTreeException(s"TicTacToeSlow: parse failure: $s"))
 
-  trait TicTacToeState extends State[TicTacToeSlow] {
+  trait TicTacToeSlowState$ extends State[TicTacToeSlow] {
     /**
      * In this game, all states are valid.
      *
@@ -197,6 +198,6 @@ object TicTacToeSlow {
     }
   }
 
-  implicit object TicTacToeState extends TicTacToeState
+  implicit object TicTacToeSlowState$ extends TicTacToeSlowState$
 
 }

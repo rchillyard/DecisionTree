@@ -274,7 +274,7 @@ object TicTacToe {
   /**
    * Trait which extends the type class State with a concrete underlying type of TicTacToe.
    */
-  trait TicTacToeIntState extends State[TicTacToe] {
+  trait TicTacToeState$ extends State[TicTacToe] {
     /**
      * In this game, all states are valid.
      *
@@ -313,7 +313,7 @@ object TicTacToe {
     }
   }
 
-  implicit object TicTacToeIntState extends TicTacToeIntState
+  implicit object TicTacToeState$ extends TicTacToeState$
 
   /**
    * Method to parse a pattern for a starting position.
