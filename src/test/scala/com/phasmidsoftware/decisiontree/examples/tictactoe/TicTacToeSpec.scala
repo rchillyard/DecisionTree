@@ -6,7 +6,6 @@ import com.phasmidsoftware.decisiontree.moves.State
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-
 import scala.util.{Failure, Success, Try}
 
 class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
@@ -209,20 +208,17 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "block" in {
-        TicTacToe.parse("0X0     0").get.block shouldBe Some(true)
-        TicTacToe.parse("X0X     0").get.block shouldBe Some(false)
+        TicTacToe.parse("0 0     0").get.play(xOrO = true)(0, 1).block shouldBe Some(true)
+        TicTacToe.parse("X X     0").get.play(xOrO = false)(0, 1).block shouldBe Some(false)
     }
 
-    it should "heuristic" in {
+    it should "heuristic 1" in {
         val z = implicitly[State[TicTacToe]]
-        z.heuristic(TicTacToe.parse("XXX      ").get) shouldBe 8
         z.heuristic(TicTacToe.parse("   XXX   ").get) shouldBe 8
         z.heuristic(TicTacToe.parse("      XXX").get) shouldBe 8
         z.heuristic(TicTacToe.parse("0     XXX").get) shouldBe 3
         z.heuristic(TicTacToe.parse("000   X  ").get) shouldBe 8
-        z.heuristic(TicTacToe.parse("0X0      ").get) shouldBe 7
         z.heuristic(TicTacToe.parse("   X0X   ").get) shouldBe 4
-        z.heuristic(TicTacToe.parse("0     X0X").get) shouldBe 7
         z.heuristic(TicTacToe.parse("0X0   X  ").get) shouldBe 3
         z.heuristic(TicTacToe.parse("0 0      ").get) shouldBe 6
         z.heuristic(TicTacToe.parse("   X X  0").get) shouldBe 6
@@ -231,8 +227,14 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         z.heuristic(TicTacToe.parse("    X    ").get) shouldBe 4
         z.heuristic(TicTacToe.parse("0       X").get) shouldBe 3
         z.heuristic(TicTacToe.parse("        X").get) shouldBe 2
-        z.heuristic(TicTacToe.parse("....0.0XX").get) shouldBe 7
 
+    }
+    it should "heuristic 2" in {
+        val z = implicitly[State[TicTacToe]]
+        z.heuristic(TicTacToe.parse(" XX      ").get.play(xOrO = true)(0, 0)) shouldBe 8
+        z.heuristic(TicTacToe.parse("0 0      ").get.play(xOrO = true)(0, 1)) shouldBe 7
+        z.heuristic(TicTacToe.parse("0     X X").get.play(xOrO = false)(2, 1)) shouldBe 7
+        z.heuristic(TicTacToe.parse("....0..XX").get.play(xOrO = false)(2, 0)) shouldBe 7
     }
 
 }

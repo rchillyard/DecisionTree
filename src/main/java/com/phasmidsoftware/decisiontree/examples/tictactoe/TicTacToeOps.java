@@ -178,14 +178,17 @@ public class TicTacToeOps {
      * Method to detect a blocking move.
      *
      * @param x the bits of a Row (not a Board).
+     * @param y the mask (blocking cell must be in mask).
      * @return 0 if no blocking, 1 if X has one cell and 0 two cells, 2 if 0 has one cell, X two cells.
      */
-    public static int rowLineBlocking(int x) {
-        return switch (x) {
-            case 0x19, 0x16, 0x25 -> 2; // X0X XX0 0XX
-            case 0x26, 0x29, 0x1A -> 1; // 0X0 00X X00
-            default -> 0;
-        };
+    public static int rowLineBlocking(int x, int y) {
+        if (x == 0x29 && y == 0x01) return 1; // 00X  0x28 OK
+        if (x == 0x26 && y == 0x04) return 1; // 0X0  0x22 OK
+        if (x == 0x1A && y == 0x10) return 1; // X00  0x0A OK
+        if (x == 0x19 && y == 0x08) return 2; // X0X  0x11 OK
+        if (x == 0x16 && y == 0x02) return 2; // XX0  0x14 OK
+        if (x == 0x25 && y == 0x20) return 2; // 0XX  0x05 OK
+        return 0;
     }
 
     /**

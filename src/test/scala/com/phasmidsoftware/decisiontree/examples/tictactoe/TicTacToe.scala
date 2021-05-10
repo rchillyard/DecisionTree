@@ -5,7 +5,6 @@ import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeSlow.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.{DecisionTreeException, Loggable, Loggables, Shuffle}
-
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -36,7 +35,7 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
   /**
    * Defines a Matching type which takes a Row and returns a Cell.
    */
-  type Matching = Row => Cell
+  type Matching = RowWithMask => Cell
 
   /**
    * Method to determine which player was responsible for creating this state.
@@ -195,31 +194,31 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
   // NOTE perhaps we could eliminate rows that don't include the newly played cell.
   private def row(board: Board)(i: Int): Row = board.row(i)
 
-  private def rows(board: Board): LazyList[Row] = LazyList.from(0).take(stride).map(i => row(board)(i))
+  private def rowsWithMask(board: Board): LazyList[RowWithMask] = LazyList.from(0).take(stride).map(i => row(board)(i) -> TicTacToeOps.row(difference, i))
 
-  private def isMatch(f: Matching)(rs: LazyList[Row]): Cell = rs.map(f).foldLeft[Cell](None)((result, cell) => result orElse cell)
+  private def isMatch(f: Matching)(rs: LazyList[RowWithMask]): Cell = rs.map(f).foldLeft[Cell](None)((result, cell) => result orElse cell)
 
   // NOTE a win is a win. We don't have to worry that the winning cell is not new since pieces cannot be moved once placed.
-  private def isWin(rs: LazyList[Row]): Cell = isMatch(isLine)(rs)
+  private def isWin(rs: LazyList[RowWithMask]): Cell = isMatch(isLine)(rs)
 
-  private def isPendingWin(rs: LazyList[Row]): Cell = isMatch(isLinePending)(rs)
+  private def isPendingWin(rs: LazyList[RowWithMask]): Cell = isMatch(isLinePending)(rs)
 
   // TODO the problem with this is that it gets any block, including previous blocks. We require to match only THIS block.
-  private def isBlock(rs: LazyList[Row]): Cell = isMatch(isBlocking)(rs)
+  private def isBlock(rs: LazyList[RowWithMask]): Cell = isMatch(isBlocking)(rs)
 
-  private def isLine(x: Row): Cell = rowLine(x) match {
+  private def isLine(x: RowWithMask): Cell = rowLine(x._1) match {
     case 1 => Some(true)
     case 2 => Some(false)
     case _ => None
   }
 
-  private def isLinePending(x: Row): Cell = rowLinePending(x) match {
+  private def isLinePending(x: RowWithMask): Cell = rowLinePending(x._1) match {
     case 1 => Some(true)
     case 2 => Some(false)
     case _ => None
   }
 
-  private def isBlocking(x: Row): Cell = rowLineBlocking(x) match {
+  private def isBlocking(x: RowWithMask): Cell = rowLineBlocking(x._1, x._2) match {
     case 1 => Some(true)
     case 2 => Some(false)
     case _ => None
@@ -232,11 +231,11 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
   private lazy val r1: Board = Board(rotate(r0.value))
   private lazy val r2: Board = Board(rotate(r1.value))
   private lazy val r3: Board = Board(rotate(r2.value))
-  private lazy val rowsR0: LazyList[Row] = rows(r0)
-  private lazy val rowsL0: LazyList[Row] = rows(l0)
-  private lazy val diagR: Row = diagonal(r0.value)
-  private lazy val diagL: Row = diagonal(l0.value)
-  private lazy val diagonals: LazyList[Row] = diagR #:: diagL #:: LazyList.empty
+  private lazy val rowsR0: LazyList[RowWithMask] = rowsWithMask(r0)
+  private lazy val rowsL0: LazyList[RowWithMask] = rowsWithMask(l0)
+  private lazy val diagR: RowWithMask = diagonal(r0.value) -> diagonal(difference)
+  private lazy val diagL: RowWithMask = diagonal(l0.value) -> diagonal(transposeBoard(difference))
+  private lazy val diagonals: LazyList[RowWithMask] = diagR #:: diagL #:: LazyList.empty
 }
 
 object TicTacToe {
