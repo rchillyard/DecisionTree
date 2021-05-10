@@ -21,7 +21,8 @@ trait State[S] extends Ordering[S] {
    *
    * @param s a (current) state.
    * @return an Option of Boolean: if None then this state is not a goal state.
-   *         If Some(b) then we got a result and the winner is the antagonist who moves first.
+   *         If Some(true) then we got a win; otherwise, if Some(false) then
+   *         we terminated without a win (a draw).
    */
   def isGoal(s: S): Option[Boolean]
 

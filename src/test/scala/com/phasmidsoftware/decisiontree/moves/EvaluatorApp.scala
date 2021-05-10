@@ -1,11 +1,13 @@
 package com.phasmidsoftware.decisiontree.moves
 
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeSlow
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe
+import com.phasmidsoftware.util.Loggable
 
 object EvaluatorApp extends App {
-    val eval = new Evaluator[TicTacToeSlow]
-    val start: TicTacToeSlow = TicTacToeSlow()
-    val so: Option[TicTacToeSlow] = eval.evaluate(start)
-    println(so)
-    println(so map (implicitly[State[TicTacToeSlow]].isGoal(_)))
+  implicit val z: Loggable[TicTacToe] = (t: TicTacToe) => t.render()
+  val eval = new Evaluator[TicTacToe]
+  val start: TicTacToe = TicTacToe()
+  val so: Option[TicTacToe] = eval.evaluate(start)
+  println(so)
+  println(so map (implicitly[State[TicTacToe]].isGoal(_)))
 }

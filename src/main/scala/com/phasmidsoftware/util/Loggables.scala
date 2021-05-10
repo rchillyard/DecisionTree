@@ -19,6 +19,17 @@ trait Loggables {
    * @tparam T the underlying type of the first parameter of the input to the render method.
    * @return a Loggable[ Seq[T] ]
    */
+  def seqLoggable[T: Loggable]: Loggable[Seq[T]] = (ts: Seq[T]) => {
+    val tl = implicitly[Loggable[T]]
+    ts map (t => tl.toLog(t)) mkString("{", ", ", "}")
+  }
+
+  /**
+   * Method to return a Loggable[ Seq[T] ].
+   *
+   * @tparam T the underlying type of the first parameter of the input to the render method.
+   * @return a Loggable[ Seq[T] ]
+   */
   def listLoggable[T: Loggable]: Loggable[List[T]] = (ts: List[T]) => {
     val tl = implicitly[Loggable[T]]
     ts match {
@@ -204,7 +215,6 @@ object Reflection {
    */
   def extractFieldNames(classTag: ClassTag[_], method: String): Array[String] = {
     import java.lang.reflect.Modifier
-
     import scala.util.control.NonFatal
 
     val clazz = classTag.runtimeClass

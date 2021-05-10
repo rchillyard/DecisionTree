@@ -30,7 +30,7 @@ case class Board(value: Int) extends AnyVal {
  * @param prior the prior situation.
  */
 case class TicTacToe(board: Board, prior: TicTacToe = start) {
-
+  // TODO: remove me.
   implicit val z: Loggable[Int] = (t: Row) => t.toHexString
 
   /**
@@ -89,14 +89,14 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
    *
    * @return a String.
    */
-  def render: String = s"${TicTacToeOps.render(board.value)} ($heuristic)"
+  def render(): String = s"${TicTacToeOps.render(board.value)} ($heuristic)"
 
   /**
    * Method to get the history of a TicTacToe position, as a String.
    */
   lazy val history: List[String] = prior match {
-    case TicTacToe(Board(0), _) => List(render)
-    case x => x.history :+ render
+    case TicTacToe(Board(0), _) => List(render())
+    case x => x.history :+ render()
   }
 
   /**
@@ -144,6 +144,15 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
     case _ => false
   }
 
+  /**
+   * Method to determine if this layout is a draw, i.e. no side can ever win.
+   *
+   * TODO figure out a better way to determine a draw.
+   *
+   * @return Some(false) if it's a draw, else None.
+   */
+  def draw: Cell = if (open.isEmpty) Some(false) else None
+
   private lazy val center = (difference & 0xC00000) != 0
 
   private lazy val difference = board.value ^ prior.board.value
@@ -154,6 +163,9 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
 
   private lazy val corner = (difference & 0xCC0CC000) != 0
 
+  private lazy val middle = false // TODO implement me properly but see below.
+
+  // CONSIDER reducing the results by one because a "middle" solution is just what's left. There is nothing good about it.
   private lazy val heuristic: Double = win match {
     case Some(x)
       if x == player => 8
@@ -167,27 +179,32 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
             case Some(x)
               if x == player => 6
             case _
-              if center => 3
+              if center => 4
             case _
-              if oppositeCorner => 2
+              if oppositeCorner => 3
             case _
-              if corner => 1
+              if corner => 2
+            case _
+              if middle => 1
             case _ =>
               0
           }
       }
   }
 
+  // NOTE perhaps we could eliminate rows that don't include the newly played cell.
   private def row(board: Board)(i: Int): Row = board.row(i)
 
   private def rows(board: Board): LazyList[Row] = LazyList.from(0).take(stride).map(i => row(board)(i))
 
   private def isMatch(f: Matching)(rs: LazyList[Row]): Cell = rs.map(f).foldLeft[Cell](None)((result, cell) => result orElse cell)
 
+  // NOTE a win is a win. We don't have to worry that the winning cell is not new since pieces cannot be moved once placed.
   private def isWin(rs: LazyList[Row]): Cell = isMatch(isLine)(rs)
 
   private def isPendingWin(rs: LazyList[Row]): Cell = isMatch(isLinePending)(rs)
 
+  // TODO the problem with this is that it gets any block, including previous blocks. We require to match only THIS block.
   private def isBlock(rs: LazyList[Row]): Cell = isMatch(isBlocking)(rs)
 
   private def isLine(x: Row): Cell = rowLine(x) match {
@@ -281,7 +298,7 @@ object TicTacToe {
      * @return a Cell: if None then this state is not a goal state.
      *         If Some(b) then we got a result and the winner is the antagonist who moves first.
      */
-    def isGoal(s: TicTacToe): Cell = s.win
+    def isGoal(s: TicTacToe): Cell = s.win orElse s.draw
 
     /**
      * Return all of the possible moves from the given state.
