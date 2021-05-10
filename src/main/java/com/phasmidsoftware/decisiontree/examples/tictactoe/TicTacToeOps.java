@@ -38,13 +38,14 @@ public class TicTacToeOps {
      * The sequence of the resulting array is top-left (index 0), top-middle, top-right, mid-left, mid-middle, etc.
      * up to bottom-right (index 8).
      *
-     * @param x a Board.
+     * @param z a Board.
      * @return an array of index (int) elements, each of which represents a vacant space.
      */
-    public static int[] open(int x) {
+    public static int[] open(final int z) {
         // CONSIDER is there a more efficient way to count the bits?
         int[] empty = new int[9];
         int count = 0;
+        int x = z;
         for (int i = 0; i < 9; i++) {
             int y = x & 0xC0000000;
             if (y == 0xC0000000 || y == 0x00000000) empty[count++] = i;
@@ -58,11 +59,12 @@ public class TicTacToeOps {
     /**
      * Method to render a Board as three lines of X, 0, and . separated by newlines.
      *
-     * @param x a Board.
+     * @param z a Board.
      * @return a String, which ends in a newline.
      */
-    public static String render(int x) {
+    public static String render(final int z) {
         StringBuilder sb = new StringBuilder();
+        int x = z;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 int y = ((x & 0xC0000000) >> 30) & 0x3;
@@ -183,12 +185,12 @@ public class TicTacToeOps {
      */
     public static int rowLineBlocking(int x, int y) {
         if (x == 0x29 && y == 0x01) return 1; // 00X  0x28 OK
-        if (x == 0x26 && y == 0x04) return 1; // 0X0  0x22 OK
-        if (x == 0x1A && y == 0x10) return 1; // X00  0x0A OK
-        if (x == 0x19 && y == 0x08) return 2; // X0X  0x11 OK
-        if (x == 0x16 && y == 0x02) return 2; // XX0  0x14 OK
-        if (x == 0x25 && y == 0x20) return 2; // 0XX  0x05 OK
-        return 0;
+        else if (x == 0x26 && y == 0x04) return 1; // 0X0  0x22 OK
+        else if (x == 0x1A && y == 0x10) return 1; // X00  0x0A OK
+        else if (x == 0x19 && y == 0x08) return 2; // X0X  0x11 OK
+        else if (x == 0x16 && y == 0x02) return 2; // XX0  0x14 OK
+        else if (x == 0x25 && y == 0x20) return 2; // 0XX  0x05 OK
+        else return 0;
     }
 
     /**
