@@ -2,9 +2,11 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.{parseString, stride}
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
+import com.phasmidsoftware.decisiontree.moves.State
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+
 import scala.util.{Failure, Success, Try}
 
 class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
@@ -145,7 +147,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val t0 = TicTacToe()
         val t1 = t0.play(xOrO = true)(0, 0)
         t1.open.size shouldBe stride * stride - 1
-        t1.render shouldBe "X..\n...\n...\n (0.0)"
+        t1.render shouldBe "X..\n...\n...\n (1.0)"
     }
 
     it should "play false, 1, 0" in {
@@ -199,8 +201,36 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         TicTacToe.parse(" 0    XXX").get.win shouldBe Some(true)
     }
 
-    ignore should "peneWin" in {
+    it should "peneWin" in {
         TicTacToe.from(0x44000000).peneWin shouldBe Some(true)
         TicTacToe.from(0x40040000).peneWin shouldBe Some(true)
+        TicTacToe.from(0x40400000).peneWin shouldBe Some(true)
+        TicTacToe.parse(".00     0").get.peneWin shouldBe Some(false)
     }
+
+    it should "block" in {
+        TicTacToe.parse("0X0     0").get.block shouldBe Some(true)
+        TicTacToe.parse("X0X     0").get.block shouldBe Some(false)
+    }
+
+    it should "heuristic" in {
+        val z = implicitly[State[TicTacToe]]
+        z.heuristic(TicTacToe.parse("XXX      ").get) shouldBe 8
+        z.heuristic(TicTacToe.parse("   XXX   ").get) shouldBe 8
+        z.heuristic(TicTacToe.parse("      XXX").get) shouldBe 8
+        z.heuristic(TicTacToe.parse("0     XXX").get) shouldBe 2
+        z.heuristic(TicTacToe.parse("000   X  ").get) shouldBe 8
+        z.heuristic(TicTacToe.parse("0X0      ").get) shouldBe 7
+        z.heuristic(TicTacToe.parse("   X0X   ").get) shouldBe 3
+        z.heuristic(TicTacToe.parse("0     X0X").get) shouldBe 7
+        z.heuristic(TicTacToe.parse("0X0   X  ").get) shouldBe 2
+        z.heuristic(TicTacToe.parse("0 0      ").get) shouldBe 6
+        z.heuristic(TicTacToe.parse("   X X  0").get) shouldBe 6
+        z.heuristic(TicTacToe.parse("0     X X").get) shouldBe 6
+        z.heuristic(TicTacToe.parse("0 0   X  ").get) shouldBe 2
+        z.heuristic(TicTacToe.parse("    X    ").get) shouldBe 3
+        z.heuristic(TicTacToe.parse("0       X").get) shouldBe 2
+        z.heuristic(TicTacToe.parse("        X").get) shouldBe 1
+    }
+
 }

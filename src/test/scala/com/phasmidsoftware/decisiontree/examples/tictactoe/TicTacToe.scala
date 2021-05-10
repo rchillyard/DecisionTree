@@ -5,6 +5,7 @@ import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeSlow.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.util.{DecisionTreeException, Loggable, Loggables, Shuffle}
+
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -15,7 +16,9 @@ import scala.util.{Failure, Success, Try}
 case class Board(value: Int) extends AnyVal {
   def row(i: Int): Row = TicTacToeOps.row(value, i)
 
-  def toHexString: String = value.toHexString
+  override def toString: String = value.toHexString
+
+  def render: String = TicTacToeOps.render(value)
 
   def transpose: Board = Board(transposeBoard(value))
 }
@@ -27,6 +30,8 @@ case class Board(value: Int) extends AnyVal {
  * @param prior the prior situation.
  */
 case class TicTacToe(board: Board, prior: TicTacToe = start) {
+
+  implicit val z: Loggable[Int] = (t: Row) => t.toHexString
 
   /**
    * Defines a Matching type which takes a Row and returns a Cell.
@@ -52,6 +57,15 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
   lazy val win: Cell = isWin(rowsR0) orElse isWin(rowsL0) orElse isWin(diagonals)
 
   /**
+   * Method to determine whether there is a block by one player against his opponent..
+   * The line may be horizontal (a row), vertical (a column) or diagonal.
+   *
+   * @return Some(b) if there is a line of 0X0 or similar otherwise None.
+   *         The Boolean b is true for player X, and false for player 0.
+   */
+  lazy val block: Cell = isBlock(rowsR0) orElse isBlock(rowsL0) orElse isBlock(diagonals)
+
+  /**
    * Method to determine whether there is a potential win.
    * The line may be horizontal (a row), vertical (a column) or diagonal and missing one element.
    *
@@ -69,17 +83,31 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
    */
   def play(xOrO: Boolean)(row: Int, col: Int): TicTacToe = TicTacToe(Board(TicTacToeOps.play(board.value, xOrO, row, col)), this)
 
+  /**
+   * Method to create a string of Xs and 0s corresponding to this TicTacToe position.
+   * Also includes the heuristic for the position.
+   *
+   * @return a String.
+   */
   def render: String = s"${TicTacToeOps.render(board.value)} ($heuristic)"
 
+  /**
+   * Method to get the history of a TicTacToe position, as a String.
+   */
   lazy val history: List[String] = prior match {
     case TicTacToe(Board(0), _) => List(render)
     case x => x.history :+ render
   }
 
-  override def toString: String = s"${board.toHexString}"
+  /**
+   * toString method for debugging: give the current board as a Hex String.
+   *
+   * @return a String of hexadecimal characters of length 8.
+   */
+  override def toString: String = s"$board"
 
   /**
-   * Val to determine the list of open cells from this TIcTacToe.
+   * The list of open cells for this TicTacToe.
    *
    * @return a sequence of (Int, Int) tuples corresponding to the row, column indices.
    */
@@ -89,30 +117,65 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
     q.toList // CONSIDER returning q as is.
   }
 
+  /**
+   * Function to make a play for the X player at a cell.
+   */
   val playX: (Int, Int) => TicTacToe = play(xOrO = true)
+
+  /**
+   * Function to make a play for the 0 player at a cell.
+   */
   val play0: (Int, Int) => TicTacToe = play(xOrO = false)
 
+  /**
+   * HashCode based on the board only (not prior).
+   *
+   * @return a hashCode.
+   */
   override def hashCode(): Int = board.hashCode()
 
+  /**
+   * Equals based on the board only (not prior).
+   *
+   * @return Boolean.
+   */
   override def equals(obj: Any): Boolean = obj match {
     case TicTacToe(b, _) => board == b
     case _ => false
   }
 
-  def blocking(x: Boolean): Boolean = false // TODO implement me
+  private lazy val center = (difference & 0xC00000) != 0
 
-  private lazy val center = ((board.value ^ prior.board.value) & 0xC00000) != 0
+  private lazy val difference = board.value ^ prior.board.value
+
+  private lazy val oppositeCorner = corner && (opposite(r0, r2) || opposite(r1, r3))
+
+  private def opposite(r0: Board, r1: Board): Boolean = ((r0.value ^ r1.value) & 0xC0000000) == 0xC0000000
+
+  private lazy val corner = (difference & 0xCC0CC000) != 0
 
   private lazy val heuristic: Double = win match {
-    case Some(x) if x == player => 8
-    case Some(x) if blocking(x) => 7
-    case _ => peneWin // TODO we need to be able to distinguish a "fork" position from a single peneWin
-    match {
-      case Some(x) if x == player => 6
-      case _ if center => 3
-      case _ => 0
-    }
-
+    case Some(x)
+      if x == player => 8
+    case _ =>
+      block match {
+        case Some(y)
+          if y == player => 7
+        case _ =>
+          peneWin // TODO we need to be able to distinguish a "fork" position from a single peneWin
+          match {
+            case Some(x)
+              if x == player => 6
+            case _
+              if center => 3
+            case _
+              if oppositeCorner => 2
+            case _
+              if corner => 1
+            case _ =>
+              0
+          }
+      }
   }
 
   private def row(board: Board)(i: Int): Row = board.row(i)
@@ -125,6 +188,8 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
 
   private def isPendingWin(rs: LazyList[Row]): Cell = isMatch(isLinePending)(rs)
 
+  private def isBlock(rs: LazyList[Row]): Cell = isMatch(isBlocking)(rs)
+
   private def isLine(x: Row): Cell = rowLine(x) match {
     case 1 => Some(true)
     case 2 => Some(false)
@@ -132,35 +197,29 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
   }
 
   private def isLinePending(x: Row): Cell = rowLinePending(x) match {
-      case 1 => Some(true)
-      case 2 => Some(false)
-      case _ => None
-    }
+    case 1 => Some(true)
+    case 2 => Some(false)
+    case _ => None
+  }
 
-  import com.phasmidsoftware.util.Flog._
+  private def isBlocking(x: Row): Cell = rowLineBlocking(x) match {
+    case 1 => Some(true)
+    case 2 => Some(false)
+    case _ => None
+  }
 
   implicit val optionLoggable: Loggable[Option[Int]] = new Loggables {}.optionLoggable[Int]
 
   private lazy val r0: Board = board
   private lazy val l0: Board = Board(transposeBoard(board.value))
   private lazy val r1: Board = Board(rotate(r0.value))
-  private lazy val l1: Board = Board(rotate(l0.value))
   private lazy val r2: Board = Board(rotate(r1.value))
-  private lazy val l2: Board = Board(rotate(l1.value))
   private lazy val r3: Board = Board(rotate(r2.value))
-  private lazy val l3: Board = Board(rotate(l2.value))
   private lazy val rowsR0: LazyList[Row] = rows(r0)
   private lazy val rowsL0: LazyList[Row] = rows(l0)
-  private lazy val rowsR1: LazyList[Row] = rows(r1)
-  private lazy val rowsL1: LazyList[Row] = rows(l1)
-  private lazy val rowsR2: LazyList[Row] = rows(r2)
-  private lazy val rowsL2: LazyList[Row] = rows(l2)
-  private lazy val rowsR3: LazyList[Row] = rows(r3)
-  private lazy val rowsL3: LazyList[Row] = rows(l3)
   private lazy val diagR: Row = diagonal(r0.value)
   private lazy val diagL: Row = diagonal(l0.value)
   private lazy val diagonals: LazyList[Row] = diagR #:: diagL #:: LazyList.empty
-
 }
 
 object TicTacToe {

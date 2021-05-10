@@ -168,8 +168,22 @@ public class TicTacToeOps {
      */
     public static int rowLinePending(int x) {
         return switch (x) {
-            case 0x11, 0x14, 0x05 -> 1; // XX. X.X .XX
-            case 0x22, 0x28, 0x0A -> 2; // 00. 0.0 .00
+            case 0x11, 0x14, 0x05 -> 1; // X.X XX. .XX
+            case 0x22, 0x28, 0x0A -> 2; // 0.0 00. .00
+            default -> 0;
+        };
+    }
+
+    /**
+     * Method to detect a blocking move.
+     *
+     * @param x the bits of a Row (not a Board).
+     * @return 0 if no blocking, 1 if X has one cell and 0 two cells, 2 if 0 has one cell, X two cells.
+     */
+    public static int rowLineBlocking(int x) {
+        return switch (x) {
+            case 0x19, 0x16, 0x25 -> 2; // X0X XX0 0XX
+            case 0x26, 0x29, 0x1A -> 1; // 0X0 00X X00
             default -> 0;
         };
     }
