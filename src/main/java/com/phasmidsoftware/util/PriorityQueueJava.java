@@ -494,7 +494,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         E result = (E) heap[0];
         E x = (E) heap[size - 1];
         if (x == null)
-            throw new RuntimeException("logic error");
+            throw new PriorityQueueException("logic error");
         heap[--size] = null;
         if (size > 0)
             siftDown(0, x);
@@ -505,13 +505,13 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     private static Object[] checkNoNulls(final Object[] heap, final int size) {
         for (int i = 0; i < size; i++)
             if (heap[i] == null)
-                throw new RuntimeException("Heap has null at index " + i);
+                throw new PriorityQueueException("Heap has null at index " + i);
         if (heap.length == size)
             return heap;
         if (heap.length > size && heap[size] == null)
             return heap;
         else
-            throw new RuntimeException("Heap has not-null at index " + size);
+            throw new PriorityQueueException("Heap has not-null at index " + size);
     }
 
     /**
