@@ -1,6 +1,6 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.start
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.{TicTacToeState$, start}
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeSlow.stride
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
@@ -211,6 +211,14 @@ case class TicTacToe(board: Board, prior: TicTacToe = start) {
   private lazy val diagR: RowWithMask = diagonal(r0.value) -> diagonal(difference)
   private lazy val diagL: RowWithMask = diagonal(l0.value) -> diagonal(transposeBoard(difference))
   private lazy val diagonals: LazyList[RowWithMask] = diagR #:: diagL #:: LazyList.empty
+
+  /**
+   * A list of possible states generated from the given state.
+   *
+   * @return a list of (unordered) states.
+   */
+  lazy val getStates: Seq[TicTacToe] = for (m <- TicTacToeState$.moves(this); v = m(this); if TicTacToeState$.isValid(v)) yield v
+
 }
 
 object TicTacToe {
