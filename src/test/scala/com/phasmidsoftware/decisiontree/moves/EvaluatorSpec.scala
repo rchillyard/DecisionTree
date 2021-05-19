@@ -1,7 +1,8 @@
 package com.phasmidsoftware.decisiontree.moves
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe
-import com.phasmidsoftware.util.{Loggable, PriorityQueue}
+import com.phasmidsoftware.flog.Loggable
+import com.phasmidsoftware.util.PriorityQueue
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 

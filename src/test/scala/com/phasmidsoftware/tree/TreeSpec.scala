@@ -1,7 +1,7 @@
 package com.phasmidsoftware.tree
 
 import com.phasmidsoftware.decisiontree.tree.{Goal, LazyTree, Tree}
-import com.phasmidsoftware.util.{Flog, LogFunction, Loggable, Loggables}
+import com.phasmidsoftware.flog.Flog
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
 import org.scalatest.tagobjects.Slow
@@ -22,7 +22,7 @@ class TreeSpec extends flatspec.AnyFlatSpec with should.Matchers {
   }
 
   def afterEach(): Unit = {
-    Flog.enabled = true // we need to put the (singleton) value of enabled back the way it was.
+    //    Flog.enabled = true // we need to put the (singleton) value of enabled back the way it was.
     evaluated = false
   }
 
@@ -154,18 +154,15 @@ class TreeSpec extends flatspec.AnyFlatSpec with should.Matchers {
   }
   it should "work for lazy nodes" in {
     val sb = new StringBuilder
-    val loggables = new Loggables {}
+    val flog: Flog = Flog(sb)
     val generatorFunction: Int => Seq[Int] = t => {
-      import Flog._
-      import com.phasmidsoftware.util.Loggable._
-      implicit val logFunc: LogFunction = LogFunction(s => sb.append(s).append("\n"))
-      implicit val loggableSeqInt: Loggable[List[Int]] = loggables.listLoggable[Int]
-      Flogger(getString)(logFunc) !! List(t * 2 + 1, t * 2 + 3)
-    }
+      import flog._
+      "Hello" !! List(t * 2 + 1, t * 2 + 3)
+    }.toSeq
     implicit val goal: Goal[Int] = Goal.goal(t => t > 100 || t % 2 == 0)
     val target = LazyTree[Int](1)(generatorFunction)
     Tree.TreeOps(target).targetedBFS() shouldBe List(5, 13, 29, 61, 125)
-    sb.toString() shouldBe "log: Hello: [3, 5]\nlog: Hello: [11, 13]\nlog: Hello: [27, 29]\nlog: Hello: [59, 61]\nlog: Hello: [123, 125]\n"
+    sb.toString() shouldBe "Hello: [3, 5]\nHello: [11, 13]\nHello: [27, 29]\nHello: [59, 61]\nHello: [123, 125]\n"
   }
 
   behavior of "map"

@@ -5,13 +5,14 @@
 package com.phasmidsoftware.decisiontree
 
 import com.phasmidsoftware.decisiontree.tree.Goal
-import com.phasmidsoftware.util.{Loggable, Loggables, Show}
+import com.phasmidsoftware.flog.{Loggable, Loggables}
+import com.phasmidsoftware.util.Show
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
  * This case class is used for the result of expand method of ExpandingNode.
  *
- * @param evaluated either Some(expanding node) or: None
+ * @param evaluated   either Some(expanding node) or: None
  * @param unevaluated a sequence of unevaluated states.
  * @tparam T the underlying type of the expansion.
  */

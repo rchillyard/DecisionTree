@@ -1,7 +1,7 @@
 package com.phasmidsoftware.decisiontree.moves
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe
-import com.phasmidsoftware.util.Loggable
+import com.phasmidsoftware.flog.Loggable
 
 object EvaluatorApp extends App {
   implicit val z: Loggable[TicTacToe] = (t: TicTacToe) => t.render()

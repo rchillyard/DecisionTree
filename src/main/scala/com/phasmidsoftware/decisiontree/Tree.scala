@@ -4,7 +4,8 @@
 
 package com.phasmidsoftware.decisiontree
 
-import com.phasmidsoftware.util.{Loggable, Output, Outputable, Show}
+import com.phasmidsoftware.flog.Loggable
+import com.phasmidsoftware.util.{Output, Outputable, Show}
 
 import scala.language.postfixOps
 
