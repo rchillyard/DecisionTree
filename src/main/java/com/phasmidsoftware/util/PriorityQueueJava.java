@@ -186,13 +186,13 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     }
 
     /**
-     * Unsupported method.
+     * Method used only for testing.
      *
      * @return nothing.
      * @throws UnsupportedOperationException always.
      */
     public E poll() {
-        throw new UnsupportedOperationException("poll");
+        return doDel();
     }
 
     /**
@@ -378,6 +378,36 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         this(other.heap, other.comparator, other.size);
     }
 
+
+    /**
+     * Creates a {@code PriorityQueue} containing the elements in the
+     * specified collection.  If the specified collection is an instance of
+     * a {@link SortedSet} or is another {@code PriorityQueue}, this
+     * priority queue will be ordered according to the same ordering.
+     * Otherwise, this priority queue will be ordered according to the
+     * {@linkplain Comparable natural ordering} of its elements.
+     *
+     * @param c the collection whose elements are to be placed
+     *          into this priority queue
+     * @throws ClassCastException   if elements of the specified collection
+     *                              cannot be compared to one another according to the priority
+     *                              queue's ordering
+     * @throws NullPointerException if the specified collection or any
+     *                              of its elements are null
+     */
+    @SuppressWarnings("unchecked")
+    public PriorityQueueJava(Collection<? extends E> c) {
+        if (c instanceof SortedSet<?>) {
+            SortedSet<? extends E> ss = (SortedSet<? extends E>) c;
+            this.comparator = (Comparator<? super E>) ss.comparator();
+            this.heap = initElementsFromCollection(ss);
+        } else {
+            this.comparator = null;
+            this.heap = initElementsFromCollection(c);
+            heapify();
+        }
+    }
+
     public static class DeleteResult<E> {
         public DeleteResult(PriorityQueueJava<E> pq, E value) {
             this.pq = pq;
@@ -417,6 +447,18 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     private int size;
 
     /**
+     * Establishes the heap invariant (described above) in the entire tree,
+     * assuming nothing about the order of the elements prior to the call.
+     * This classic algorithm due to Floyd (1964) is known to be O(size).
+     */
+    private void heapify() {
+        int n = size, i = (n >>> 1) - 1;
+        for (; i >= 0; i--)
+            //noinspection unchecked
+            siftDown(i, (E) heap[i]);
+    }
+
+    /**
      * The comparator, or null if priority queue uses elements'
      * natural ordering.
      */
@@ -442,6 +484,26 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      * OutOfMemoryError: Requested array size exceeds VM limit
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+
+    /**
+     * Ensures that queue[0] exists, helping peek() and poll().
+     */
+    private static Object[] ensureNonEmpty(Object[] es) {
+        return (es.length > 0) ? es : new Object[1];
+    }
+
+    private Object[] initElementsFromCollection(Collection<? extends E> c) {
+        Object[] es = c.toArray();
+        int len = es.length;
+        if (c.getClass() != ArrayList.class)
+            es = Arrays.copyOf(es, len, Object[].class);
+        if (len == 1 || this.comparator != null)
+            for (Object e : es)
+                if (e == null)
+                    throw new NullPointerException();
+        this.size = len;
+        return ensureNonEmpty(es);
+    }
 
     /**
      * Increases the capacity of the array.

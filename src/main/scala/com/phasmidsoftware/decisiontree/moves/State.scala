@@ -1,12 +1,41 @@
 package com.phasmidsoftware.decisiontree.moves
 
+import com.phasmidsoftware.util.PriorityQueue
+
 /**
  * Type class for a State.
  *
  * @tparam S the type on which the state is based.
  *           For example, S might be Tic-tac-toe or Chess.
  */
-trait State[S] extends Ordering[S] {
+trait State[P, S] extends Ordering[S] {
+  /**
+   * Method to construct an S from the following parameters:
+   *
+   * CONSIDER refactoring this to take parameters (P,S) and PriorityQueue[S].
+   *
+   * @param proto a (P, Q).
+   * @param q     a PriorityQueue.
+   * @return an S.
+   */
+  def construct(proto: (P, S), q: PriorityQueue[S]): S
+
+  /**
+   * Method to yield the previous state.
+   *
+   * @param s a value of S for which we need the previous.
+   * @return an optional S.
+   */
+  def previous(s: S): Option[S]
+
+  /**
+   * Yield the PriorityQueue which for this state.
+   * Any instances of S which have already been removed from the PQ will of course not be present.
+   *
+   * @param s a value of S for which we need the priority queue.
+   * @return a PriorityQueue[S].
+   */
+  def pq(s: S): PriorityQueue[S]
 
   /**
    * Method to determine if state s is a valid state.
@@ -41,7 +70,16 @@ trait State[S] extends Ordering[S] {
    * @param s a state.
    * @return a sequence of Transition[S]
    */
-  def moves(s: S): Seq[Transition[S]]
+  def moves(s: S): Seq[Transition[P, S]]
+
+  /**
+   * Concrete method to get the possible states to follow the given state s.
+   *
+   * @param s the given state (of type S).
+   * @return a sequence of S instances which are the possible states to follow s.
+   */
+  def getStates(s: S, pq: PriorityQueue[S]): Seq[S] =
+    for (z <- moves(s); w = z(s); q = construct(w, pq) if isValid(q)) yield q
 
   /**
    * Method to determine the ordering of two States.
@@ -55,62 +93,35 @@ trait State[S] extends Ordering[S] {
 }
 
 /**
- * A function which transitions from a state S to a different state S.
+ * A function which transitions from a state S to a prototype state.
  *
- * @tparam S the type of the input parameter and of the result.
+ * @tparam P a proto-state, from which a state S can be constructed.
+ * @tparam S the type of the input..
  */
-trait Transition[S] extends (S => S) {
-
-  /**
-   * Method to compose this Move with a Transition g.
-   *
-   * @param g a Transition[S].
-   * @return a Transition[S].
-   */
-  def andThen(g: Transition[S]): Transition[S]
-}
+trait Transition[P, S] extends (S => (P, S))
 
 /**
  * A case class which implements Transition[S].
  *
  * @param f    a function S => S.
  * @param desc the human-legible description of f.
+ * @tparam P a proto-state, from which a state S can be constructed.
  * @tparam S the type of the input parameter and of the result.
  */
-case class Move[S](f: S => S, desc: String) extends Transition[S] {
+case class Move[P, S](f: S => P, desc: String) extends Transition[P, S] {
+
   /**
    * Apply this Move to s.
    *
    * @param s a state.
-   * @return a new state.
+   * @return a new proto-state.
    */
-  override def apply(s: S): S = f(s)
+  override def apply(s: S): (P, S) = f(s) -> s
 
   override def toString: String = desc
-
-  /**
-   * Composition of the descriptions of this and g.
-   *
-   * @param g a Transition[S] to be applied.
-   * @return a human-legible rendering of f andThen g.
-   */
-  private def composedDesc(g: Transition[S]): String = {
-    if (f == identity[S] _) g.toString
-    else if (g == identity[S] _) desc
-    else s"$g($desc)"
-  }
-
-  /**
-   * Method to compose this Move with a Transition g.
-   *
-   * @param g a Transition[S].
-   * @return a Transition[S].
-   */
-  def andThen(g: Transition[S]): Transition[S] = Move(f andThen g, composedDesc(g))
 }
 
 object Move {
-  def identity[S]: Move[S] = Move(Predef.identity, "")
 }
 
 /**
@@ -120,8 +131,8 @@ object Move {
  * @param transition a transition function which turns one S into another S (defaults to identity).
  * @tparam S type which defines the domain of this LazyState (must provide implicit evidence of State[T]).
  */
-case class LazyState[S: State](state: S, transition: Transition[S] = Move.identity[S]) extends (() => S) {
-  override def apply(): S = transition(state)
+case class LazyState[P, S](state: S, transition: Transition[P, S])(implicit pSs: State[P, S]) extends (() => P) {
+  override def apply(): P = transition(state)._1
 }
 
 object LazyState
