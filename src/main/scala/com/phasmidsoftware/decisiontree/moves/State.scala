@@ -121,9 +121,6 @@ case class Move[P, S](f: S => P, desc: String) extends Transition[P, S] {
   override def toString: String = desc
 }
 
-object Move {
-}
-
 /**
  * LazyState is a domain-specific class which extends Transition by defining a function parameter and a human-legible description.
  *
