@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 /**
- * An unbounded priority {@linkplain Queue queue} based on a priority heap.
+ * An unbounded min priority {@linkplain Queue queue} based on a priority heap.
  * The elements of the priority queue are ordered according to their
  * {@linkplain Comparable natural ordering}, or by a {@link Comparator}
  * provided at queue construction time, depending on which constructor is
@@ -87,10 +87,10 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     public PriorityQueueJava<E> insert(E e) {
         if (e == null)
             throw new NullPointerException();
-        System.out.println("insert: this: " + this);
+//        System.out.println("insert: this: " + this);
         PriorityQueueJava<E> result = (size >= this.heap.length) ? grow(heap.length * 2) : new PriorityQueueJava<>(this);
         result.doInsert(e);
-        System.out.println("insert: result: " + result);
+//        System.out.println("insert: result: " + result);
         return result;
     }
 
@@ -100,13 +100,13 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      * @return a tuple of the new PriorityQueueJava (without its smallest element) and the smallest element.
      */
     public DeleteResult<E> del() {
-        System.out.println("del: this: " + this);
+//        System.out.println("del: this: " + this);
         if (size == 0)
             return new DeleteResult<>(this, null);
         PriorityQueueJava<E> result = new PriorityQueueJava<>(this);
-        System.out.println("del: result (1): " + result);
+//        System.out.println("del: result (1): " + result);
         E e = result.doDel();
-        System.out.println("del: result (2): " + result);
+//        System.out.println("del: result (2): " + result);
         return new DeleteResult<>(result, e);
     }
 
@@ -186,13 +186,13 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     }
 
     /**
-     * Unsupported method.
+     * Method used only for testing.
      *
      * @return nothing.
      * @throws UnsupportedOperationException always.
      */
     public E poll() {
-        throw new UnsupportedOperationException("poll");
+        return doDel();
     }
 
     /**
@@ -360,7 +360,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      *                                  less than 1
      */
     public PriorityQueueJava(Comparator<? super E> comparator) {
-        this(0, comparator);
+        this(32, comparator);
     }
 
     /**
@@ -376,6 +376,36 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
 
     private PriorityQueueJava(PriorityQueueJava<E> other) {
         this(other.heap, other.comparator, other.size);
+    }
+
+
+    /**
+     * Creates a {@code PriorityQueue} containing the elements in the
+     * specified collection.  If the specified collection is an instance of
+     * a {@link SortedSet} or is another {@code PriorityQueue}, this
+     * priority queue will be ordered according to the same ordering.
+     * Otherwise, this priority queue will be ordered according to the
+     * {@linkplain Comparable natural ordering} of its elements.
+     *
+     * @param c the collection whose elements are to be placed
+     *          into this priority queue
+     * @throws ClassCastException   if elements of the specified collection
+     *                              cannot be compared to one another according to the priority
+     *                              queue's ordering
+     * @throws NullPointerException if the specified collection or any
+     *                              of its elements are null
+     */
+    @SuppressWarnings("unchecked")
+    public PriorityQueueJava(Collection<? extends E> c) {
+        if (c instanceof SortedSet<?>) {
+            SortedSet<? extends E> ss = (SortedSet<? extends E>) c;
+            this.comparator = (Comparator<? super E>) ss.comparator();
+            this.heap = initElementsFromCollection(ss);
+        } else {
+            this.comparator = null;
+            this.heap = initElementsFromCollection(c);
+            heapify();
+        }
     }
 
     public static class DeleteResult<E> {
@@ -396,6 +426,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         private final E value;
     }
 
+    @SuppressWarnings("MissingSerialAnnotation")
     private static final long serialVersionUID = -7720805057305804111L;
 
     private static final int DEFAULT_INITIAL_CAPACITY = 11;
@@ -414,6 +445,18 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      * The number of elements in the priority queue.
      */
     private int size;
+
+    /**
+     * Establishes the heap invariant (described above) in the entire tree,
+     * assuming nothing about the order of the elements prior to the call.
+     * This classic algorithm due to Floyd (1964) is known to be O(size).
+     */
+    private void heapify() {
+        int n = size, i = (n >>> 1) - 1;
+        for (; i >= 0; i--)
+            //noinspection unchecked
+            siftDown(i, (E) heap[i]);
+    }
 
     /**
      * The comparator, or null if priority queue uses elements'
@@ -441,6 +484,26 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      * OutOfMemoryError: Requested array size exceeds VM limit
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+
+    /**
+     * Ensures that queue[0] exists, helping peek() and poll().
+     */
+    private static Object[] ensureNonEmpty(Object[] es) {
+        return (es.length > 0) ? es : new Object[1];
+    }
+
+    private Object[] initElementsFromCollection(Collection<? extends E> c) {
+        Object[] es = c.toArray();
+        int len = es.length;
+        if (c.getClass() != ArrayList.class)
+            es = Arrays.copyOf(es, len, Object[].class);
+        if (len == 1 || this.comparator != null)
+            for (Object e : es)
+                if (e == null)
+                    throw new NullPointerException();
+        this.size = len;
+        return ensureNonEmpty(es);
+    }
 
     /**
      * Increases the capacity of the array.
@@ -493,7 +556,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         E result = (E) heap[0];
         E x = (E) heap[size - 1];
         if (x == null)
-            throw new RuntimeException("logic error");
+            throw new PriorityQueueException("logic error");
         heap[--size] = null;
         if (size > 0)
             siftDown(0, x);
@@ -504,13 +567,13 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     private static Object[] checkNoNulls(final Object[] heap, final int size) {
         for (int i = 0; i < size; i++)
             if (heap[i] == null)
-                throw new RuntimeException("Heap has null at index " + i);
+                throw new PriorityQueueException("Heap has null at index " + i);
         if (heap.length == size)
             return heap;
         if (heap.length > size && heap[size] == null)
             return heap;
         else
-            throw new RuntimeException("Heap has not-null at index " + size);
+            throw new PriorityQueueException("Heap has not-null at index " + size);
     }
 
     /**

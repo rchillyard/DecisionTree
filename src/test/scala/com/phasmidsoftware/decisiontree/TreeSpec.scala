@@ -1,6 +1,7 @@
 package com.phasmidsoftware.decisiontree
 
-import com.phasmidsoftware.util.{Loggable, Show}
+import com.phasmidsoftware.flog.Loggable
+import com.phasmidsoftware.util.Show
 import org.scalatest.matchers.should
 import org.scalatest.{BeforeAndAfterEach, flatspec}
 
