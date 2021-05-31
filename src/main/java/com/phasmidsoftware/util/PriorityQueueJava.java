@@ -261,13 +261,19 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         return a;
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
+    protected PriorityQueueJava<E> clone() {
+        return new PriorityQueueJava<>(heap.clone(), comparator, size);
+    }
+
     /**
      * Returns an iterator over the elements in this queue, in their increasing order.
      *
      * @return an iterator over the elements.
      */
     public Iterator<E> iterator() {
-        return new PriorityQueueIterator<>(new PriorityQueueJava<>(this));
+        return new PriorityQueueIterator<>(this.clone());
     }
 
     /**
@@ -285,6 +291,33 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      */
     public final Spliterator<E> spliterator() {
         return new PriorityQueueJava.PriorityQueueSpliterator<>(this, 0, -1, 0);
+    }
+
+    /**
+     * Equals method: checks the size and, if not empty, the first element.
+     *
+     * @param o the other Object.
+     * @return true if this and o are equivalent.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PriorityQueueJava)) return false;
+        PriorityQueueJava<?> that = (PriorityQueueJava<?>) o;
+        return size == that.size && (size == 0 || heap[0] == that.heap[0]);
+    }
+
+    /**
+     * hashCode method: based on the size and, if not empty, the first element.
+     *
+     * @return the hash code.
+     */
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(size);
+        if (size > 0)
+            result = 31 * result + heap[0].hashCode();
+        return result;
     }
 
     /**

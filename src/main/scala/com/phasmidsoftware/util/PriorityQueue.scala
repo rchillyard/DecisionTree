@@ -25,14 +25,21 @@ case class PriorityQueue[X: Ordering](pq: PriorityQueueJava[X]) extends Iterable
     override def size: Int = pq.size()
 
     def iterator: Iterator[X] = for (x <- pq.iterator().asScala) yield x
+
+    override def hashCode(): Int = pq.hashCode()
+
+    override def equals(obj: Any): Boolean = obj match {
+        case other: PriorityQueue[X] => pq.equals(other.pq)
+        case _ => false
+    }
 }
 
 object PriorityQueue {
-    def minPQ[X: Ordering]: PriorityQueue[X] = new PriorityQueue(new PriorityQueueJava[X](implicitly[Ordering[X]]))
+    def apply[X: Ordering]: PriorityQueue[X] = PriorityQueue(new PriorityQueueJava[X](implicitly[Ordering[X]]))
 
-    def minPQ[X: Ordering](x: X): PriorityQueue[X] = new PriorityQueue(new PriorityQueueJava[X](x, implicitly[Ordering[X]]))
+    def apply[X: Ordering](x: X): PriorityQueue[X] = PriorityQueue(new PriorityQueueJava[X](x, implicitly[Ordering[X]]))
 
-    def maxPQ[X: Ordering]: PriorityQueue[X] = new PriorityQueue(new PriorityQueueJava[X](implicitly[Ordering[X]].reverse))
+    def maxPQ[X: Ordering]: PriorityQueue[X] = apply(implicitly[Ordering[X]].reverse)
 
-    def maxPQ[X: Ordering](x: X): PriorityQueue[X] = new PriorityQueue(new PriorityQueueJava[X](x, implicitly[Ordering[X]].reverse))
+    def maxPQ[X: Ordering](x: X): PriorityQueue[X] = apply(x)(implicitly[Ordering[X]].reverse)
 }

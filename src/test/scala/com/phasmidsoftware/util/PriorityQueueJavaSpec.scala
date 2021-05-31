@@ -1,8 +1,7 @@
 package com.phasmidsoftware.util
 
-import org.scalatest.{flatspec, matchers}
-
 import java.util.Comparator
+import org.scalatest.{flatspec, matchers}
 import scala.collection.mutable
 import scala.util.Random
 
@@ -86,6 +85,7 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 	it should "work for one element" in {
 		val target = new PriorityQueueJava[Int]()
 		val result: PriorityQueueJava[Int] = target.insert(1)
+		result.size() shouldBe 1
 		val iterator = result.iterator()
 		iterator.hasNext shouldBe true
 		iterator.next() shouldBe 1

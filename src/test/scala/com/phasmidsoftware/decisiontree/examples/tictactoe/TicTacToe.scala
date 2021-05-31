@@ -5,7 +5,6 @@ import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.flog.Loggable
 import com.phasmidsoftware.util.{DecisionTreeException, PriorityQueue, Shuffle}
-
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -14,7 +13,7 @@ import scala.util.{Failure, Success, Try}
  * @param board      the current state.
  * @param maybePrior the prior state.
  */
-case class TicTacToe(board: Board, pq: PriorityQueue[TicTacToe], maybePrior: Option[TicTacToe] = None) {
+case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   /**
    * Defines a Matching type which takes a Row and returns a Cell.
@@ -125,7 +124,7 @@ case class TicTacToe(board: Board, pq: PriorityQueue[TicTacToe], maybePrior: Opt
    * @return Boolean.
    */
   override def equals(obj: Any): Boolean = obj match {
-    case TicTacToe(b, _, _) => board == b
+    case TicTacToe(b, _) => board == b
     case _ => false
   }
 
@@ -232,7 +231,7 @@ object TicTacToe {
      * @param q     a PriorityQueue.
      * @return an S.
      */
-    def construct(proto: (Board, TicTacToe), q: PriorityQueue[TicTacToe]): TicTacToe = TicTacToe(proto._1, q, Some(proto._2))
+    def construct(proto: (Board, TicTacToe), q: PriorityQueue[TicTacToe]): TicTacToe = TicTacToe(proto._1, Some(proto._2))
 
     /**
      * Method to yield the previous state.
@@ -240,14 +239,6 @@ object TicTacToe {
      * @return an optional State[S].
      */
     def previous(s: TicTacToe): Option[TicTacToe] = s.maybePrior
-
-    /**
-     * Yield the PriorityQueue which for this state.
-     * Any instances of S which have already been removed from the PQ will of course not be present.
-     *
-     * @return a PriorityQueue[S].
-     */
-    def pq(s: TicTacToe): PriorityQueue[TicTacToe] = s.pq
 
     /**
      * In this game, all states are valid.
@@ -297,7 +288,7 @@ object TicTacToe {
    * @param board the Board which defines a TicTacToe.
    * @return a TicTacToe with the given board, no predecessor and an empty Priority Queue.
    */
-  def apply(board: Board): TicTacToe = apply(board, PriorityQueue.maxPQ[TicTacToe])
+  def apply(board: Board): TicTacToe = apply(board, None)
 
   /**
    * Method to construct a starting position TicTacToe.
@@ -305,14 +296,14 @@ object TicTacToe {
    * @param proto (Board, TicTacToe).
    * @return a TicTacToe with the given board, no predecessor and an empty Priority Queue.
    */
-  def apply(proto: (Board, TicTacToe)): TicTacToe = apply(proto._1, PriorityQueue.maxPQ[TicTacToe], Some(proto._2))
+  def apply(proto: (Board, TicTacToe)): TicTacToe = apply(proto._1, Some(proto._2))
 
   /**
    * Method to construct a starting position TicTacToe.
    *
    * @return a TicTacToe with all empty cells, no predecessor and an empty Priority Queue.
    */
-  def apply(): TicTacToe = apply(Board(0), PriorityQueue.maxPQ[TicTacToe])
+  def apply(): TicTacToe = apply(Board(0))
 
   /**
    * Method to construct a TicTacToe from a particular bit pattern.
@@ -320,7 +311,7 @@ object TicTacToe {
    *
    * @return a TicTacToe with all empty cells.
    */
-  def from(x: Int): TicTacToe = TicTacToe(Board(x), PriorityQueue.maxPQ, None)
+  def from(x: Int): TicTacToe = TicTacToe(Board(x), None)
 
   /**
    * Method to parse a pattern for a starting position.
