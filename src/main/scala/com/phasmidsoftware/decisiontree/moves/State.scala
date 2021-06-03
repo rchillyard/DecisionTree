@@ -66,12 +66,11 @@ trait State[P, S] extends Ordering[S] {
   /**
    * Concrete method to get the possible states to follow the given state s.
    *
-   * @param s  the given state (of type S).
-   * @param pq the queue into which we should add the states.
-   * @return a new instance of PriorityQueue[S] with the possible states added.
+   * @param s the given state (of type S).
+   * @return a sequence of S instances which are the possible states to follow s.
    */
-  def getStates(s: S, pq: PriorityQueue[S]): PriorityQueue[S] =
-    moves(s).foldLeft[PriorityQueue[S]](pq)((q, pSt) => q.insert(construct(pSt(s), q)))
+  def getStates(s: S, pq: PriorityQueue[S]): Seq[S] =
+    for (z <- moves(s); w = z(s); q = construct(w, pq) if isValid(q)) yield q
 
   /**
    * Method to determine the ordering of two States.

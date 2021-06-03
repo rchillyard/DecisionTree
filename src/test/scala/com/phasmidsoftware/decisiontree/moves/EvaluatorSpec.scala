@@ -12,8 +12,7 @@ class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
 
   private val bTs: State[Board, TicTacToe] = implicitly[State[Board, TicTacToe]]
 
-  // TODO reinstate test
-  ignore should "evaluate TicTacToe" in {
+  it should "evaluate TicTacToe" in {
     implicit val z: Loggable[TicTacToe] = (t: TicTacToe) => "\n" + t.render()
     val eval = new Evaluator[Board, TicTacToe]
     val start: TicTacToe = TicTacToe()
@@ -26,10 +25,13 @@ class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
 
   it should "getStates" in {
     val start: TicTacToe = TicTacToe()
-    val pq = bTs.getStates(start, maxPQ)
-    val (_, t) = pq.del
-    bTs.heuristic(t) shouldBe 3
-    println(t.history)
+    val ts: Seq[TicTacToe] = bTs.getStates(start, maxPQ)
+    ts.isEmpty shouldBe false
+    ts.headOption map {
+      t =>
+        bTs.heuristic(t) shouldBe 3
+        println(t.history)
+    }
   }
 
 }

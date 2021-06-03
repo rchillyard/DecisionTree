@@ -261,19 +261,18 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         return a;
     }
 
-    @SuppressWarnings("MethodDoesntCallSuperMethod")
-    @Override
-    protected PriorityQueueJava<E> clone() {
-        return new PriorityQueueJava<>(heap.clone(), comparator, size);
-    }
-
     /**
      * Returns an iterator over the elements in this queue, in their increasing order.
+     * <p>
+     * Important NOTE: this PriorityQueue will be empty after the iterator has been traversed.
+     * This is because, internally, a binary heap is not in any very particular order--
+     * the sole invariant is "heap order."
+     * Therefore, the only way to get the second smallest element is to delete the first smallest element.
      *
      * @return an iterator over the elements.
      */
     public Iterator<E> iterator() {
-        return new PriorityQueueIterator<>(this.clone());
+        return new PriorityQueueIterator<>(this);
     }
 
     /**

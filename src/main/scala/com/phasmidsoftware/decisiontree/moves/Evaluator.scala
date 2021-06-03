@@ -23,21 +23,23 @@ class Evaluator[P, S: Loggable](implicit pSs: State[P, S]) {
   def evaluate(s: S): Option[S] = {
     @tailrec
     def inner(queues: Pair[PriorityQueue[S]]): Option[S] =
-        if (queues.head.isEmpty)
+        if (queues.t1.isEmpty)
             None
         else {
-            val (q, s) = queues.head.del
+            val (q, s) = queues.t1.del
             import flog._
             "max" !! s
             if (pSs.isGoal(s).isDefined)
                 Some(s)
             else {
-                val pq = pSs.getStates(s, q)
-                inner(queues.update(pq).swap(PriorityQueue.maxPQ))
+                val ss: Seq[S] = pSs.getStates(s, q)
+                val z: PriorityQueue[S] = ss.foldLeft(queues.t2)((y, c) => y.insert("candidate" !! c))
+                val r: Pair[PriorityQueue[S]] = queues.swap.update(z)
+                inner(r)
             }
         }
 
-      inner(Pair(PriorityQueue.maxPQ(s)))
+      inner(Pair(PriorityQueue.maxPQ(s), PriorityQueue.maxPQ))
   }
 }
 
@@ -46,21 +48,18 @@ class Evaluator[P, S: Loggable](implicit pSs: State[P, S]) {
  *
  * CONSIDER implementing with a T and an Option[T].
  *
- * @param t  the current "head" of the pair.
- * @param to the (optional) "tail" of the pair.
+ * @param t1 the current "head" of the pair.
+ * @param t2 the (optional) "tail" of the pair.
  * @tparam T the underlying type.
  */
-case class Pair[T](t: T, to: Option[T]) {
+case class Pair[T](t1: T, t2: T) {
+
     /**
-     * Swap this Pair.
+     * Swap the order of the members.
      *
-     * @param z this is used in the event of this pair having only one T value.
-     * @return a new Pair where the original t value is now the tail.
+     * @return a new Pair[T] with the members swapped.
      */
-    def swap(z: => T): Pair[T] = to match {
-        case Some(x) => Pair(x, Some(t))
-        case _ => Pair(z, Some(t))
-    }
+    def swap: Pair[T] = Pair(t2, t1)
 
     /**
      * Update this Pair and return the updated value.
@@ -68,13 +67,13 @@ case class Pair[T](t: T, to: Option[T]) {
      * @param z the value with which to replace the head value.
      * @return Pair(z, to).
      */
-    def update(z: T): Pair[T] = copy(t = z)
+    def update(z: T): Pair[T] = copy(t1 = z)
 
-    def head: T = t
+//    def head: T = t1
 }
 
 object Pair {
-    def apply[T](t: T): Pair[T] = Pair(t, None)
+//    def apply[T](t: T): Pair[T] = Pair(t, None)
 }
 
 case class PairException(msg: String) extends Exception(msg)

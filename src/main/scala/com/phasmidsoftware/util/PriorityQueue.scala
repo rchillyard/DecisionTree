@@ -24,6 +24,14 @@ case class PriorityQueue[X: Ordering](pq: PriorityQueueJava[X]) extends Iterable
 
     override def size: Int = pq.size()
 
+    /**
+     * Important NOTE: this PriorityQueue will be empty after the iterator has been traversed.
+     * This is because, internally, a binary heap is not in any very particular order--
+     * the sole invariant is "heap order."
+     * Therefore, the only way to get the second smallest element is to delete the first smallest element.
+     *
+     * @return an Iterator.
+     */
     def iterator: Iterator[X] = for (x <- pq.iterator().asScala) yield x
 
     override def hashCode(): Int = pq.hashCode()

@@ -3,7 +3,6 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.parseString
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.moves.State
-import com.phasmidsoftware.util.PriorityQueue
 import com.phasmidsoftware.util.PriorityQueue.maxPQ
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
@@ -248,7 +247,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
 
     it should "get best play" in {
         val z = implicitly[State[Board, TicTacToe]]
-        val qs: PriorityQueue[TicTacToe] = z.getStates(TicTacToe.parse(".........").get, maxPQ)
+        val qs: Seq[TicTacToe] = z.getStates(TicTacToe.parse(".........").get, maxPQ)
         z.heuristic(qs.head) shouldBe 3
     }
 
