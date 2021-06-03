@@ -1,7 +1,8 @@
 package com.phasmidsoftware.util
 
-import java.util.Comparator
 import org.scalatest.{flatspec, matchers}
+
+import java.util.Comparator
 import scala.collection.mutable
 import scala.util.Random
 
@@ -92,7 +93,7 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 		iterator.hasNext shouldBe true
 		iterator.next() shouldBe 1
 		iterator.hasNext shouldBe false
-		result.size() shouldBe 0
+		result.size() shouldBe 1
 	}
 
 	it should "work for two elements" in {
@@ -105,7 +106,7 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 		iterator.hasNext shouldBe true
 		iterator.next() shouldBe 2
 		iterator.hasNext shouldBe false
-		result.size() shouldBe 0
+		result.size() shouldBe 2
 	}
 
 	it should "work for three elements" in {
@@ -120,7 +121,7 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 		iterator.hasNext shouldBe true
 		iterator.next() shouldBe 2
 		iterator.hasNext shouldBe false
-		result.size() shouldBe 0
+		result.size() shouldBe 3
 	}
 
 }

@@ -34,6 +34,14 @@ case class PriorityQueue[X: Ordering](pq: PriorityQueueJava[X]) extends Iterable
      */
     def iterator: Iterator[X] = for (x <- pq.iterator().asScala) yield x
 
+    /**
+     * Method to insert elements into this PriorityQueue.
+     *
+     * @param xs the elements to insert.
+     * @return a new PriorityQueue.
+     */
+    def insertElements(xs: Seq[X]): PriorityQueue[X] = xs.foldLeft(this)((y, c) => y.insert(c))
+
     override def hashCode(): Int = pq.hashCode()
 
     override def equals(obj: Any): Boolean = obj match {
@@ -47,7 +55,17 @@ object PriorityQueue {
 
     def apply[X: Ordering](x: X): PriorityQueue[X] = PriorityQueue(new PriorityQueueJava[X](x, implicitly[Ordering[X]]))
 
+    def apply[X: Ordering](xs: Seq[X]): PriorityQueue[X] = {
+        import scala.jdk.CollectionConverters._
+        PriorityQueue(new PriorityQueueJava[X](xs.asJavaCollection, implicitly[Ordering[X]]))
+    }
+
     def maxPQ[X: Ordering]: PriorityQueue[X] = apply(implicitly[Ordering[X]].reverse)
 
     def maxPQ[X: Ordering](x: X): PriorityQueue[X] = apply(x)(implicitly[Ordering[X]].reverse)
+
+    def maxPQ[X: Ordering](xs: Seq[X]): PriorityQueue[X] = {
+        import scala.jdk.CollectionConverters._
+        PriorityQueue(new PriorityQueueJava[X](xs.asJavaCollection, implicitly[Ordering[X]].reverse))
+    }
 }
