@@ -1,7 +1,5 @@
 package com.phasmidsoftware.decisiontree.moves
 
-import com.phasmidsoftware.util.PriorityQueue
-
 /**
  * Type class for a State.
  *
@@ -15,10 +13,9 @@ trait State[P, S] extends Ordering[S] {
    * CONSIDER refactoring this to take parameters (P,S) and PriorityQueue[S].
    *
    * @param proto a (P, Q).
-   * @param q     a PriorityQueue.
    * @return an S.
    */
-  def construct(proto: (P, S), q: PriorityQueue[S]): S
+  def construct(proto: (P, S)): S
 
   /**
    * Method to yield the previous state.
@@ -69,8 +66,7 @@ trait State[P, S] extends Ordering[S] {
    * @param s the given state (of type S).
    * @return a sequence of S instances which are the possible states to follow s.
    */
-  def getStates(s: S, pq: PriorityQueue[S]): Seq[S] =
-    for (z <- moves(s); w = z(s); q = construct(w, pq) if isValid(q)) yield q
+  def getStates(s: S): Seq[S] = for (z <- moves(s); w = z(s); q = construct(w) if isValid(q)) yield q
 
   /**
    * Method to determine the ordering of two States.

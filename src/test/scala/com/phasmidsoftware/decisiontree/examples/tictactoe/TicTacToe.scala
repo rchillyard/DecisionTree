@@ -4,7 +4,8 @@ import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.{Prototype,
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.flog.Loggable
-import com.phasmidsoftware.util.{DecisionTreeException, PriorityQueue, Shuffle}
+import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
+
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -231,7 +232,7 @@ object TicTacToe {
      * @param q     a PriorityQueue.
      * @return an S.
      */
-    def construct(proto: (Board, TicTacToe), q: PriorityQueue[TicTacToe]): TicTacToe = TicTacToe(proto._1, Some(proto._2))
+    def construct(proto: (Board, TicTacToe)): TicTacToe = TicTacToe(proto._1, Some(proto._2))
 
     /**
      * Method to yield the previous state.

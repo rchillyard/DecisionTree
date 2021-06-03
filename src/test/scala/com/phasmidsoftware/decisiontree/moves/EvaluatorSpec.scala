@@ -2,7 +2,7 @@ package com.phasmidsoftware.decisiontree.moves
 
 import com.phasmidsoftware.decisiontree.examples.tictactoe.{Board, TicTacToe}
 import com.phasmidsoftware.flog.Loggable
-import com.phasmidsoftware.util.PriorityQueue.maxPQ
+import com.phasmidsoftware.util.PriorityQueue
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 
@@ -25,13 +25,12 @@ class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
 
   it should "getStates" in {
     val start: TicTacToe = TicTacToe()
-    val ts: Seq[TicTacToe] = bTs.getStates(start, maxPQ)
-    ts.isEmpty shouldBe false
-    ts.headOption map {
-      t =>
-        bTs.heuristic(t) shouldBe 3
-        println(t.history)
-    }
+    val ts: Seq[TicTacToe] = bTs.getStates(start)
+    val pq = PriorityQueue.maxPQ(ts)
+    pq.isEmpty shouldBe false
+    val (_, t) = pq.del
+    bTs.heuristic(t) shouldBe 3
+    println(t.history)
   }
 
 }

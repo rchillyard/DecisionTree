@@ -3,10 +3,11 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.parseString
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.moves.State
-import com.phasmidsoftware.util.PriorityQueue.maxPQ
+import com.phasmidsoftware.util.PriorityQueue
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+
 import scala.util.{Failure, Success, Try}
 
 class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
@@ -147,7 +148,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val t0 = TicTacToe()
         val b1: (Board, TicTacToe) = t0.play(xOrO = true)(0, 0)
         val bTs = implicitly[State[Board, TicTacToe]]
-        val t1 = bTs.construct(b1, maxPQ[TicTacToe])
+        val t1 = bTs.construct(b1)
         t1.open.size shouldBe TicTacToe.size * TicTacToe.size - 1
         t1.render() shouldBe "\nX..\n...\n...\n (1.0)"
     }
@@ -156,7 +157,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val t0 = TicTacToe()
         val b1 = t0.play(xOrO = false)(1, 0)
         val bTs = implicitly[State[Board, TicTacToe]]
-        val t1 = bTs.construct(b1, maxPQ[TicTacToe])
+        val t1 = bTs.construct(b1)
         t1.open.size shouldBe TicTacToe.size * TicTacToe.size - 1
         t1.render() shouldBe "\n...\n0..\n...\n (0.0)"
     }
@@ -165,9 +166,9 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val t0 = TicTacToe()
         val b1 = t0.playX(0, 0)
         val bTs = implicitly[State[Board, TicTacToe]]
-        val t1 = bTs.construct(b1, maxPQ[TicTacToe])
+        val t1 = bTs.construct(b1)
         val b2 = t1.play0(1, 0)
-        val t2 = bTs.construct(b2, maxPQ[TicTacToe])
+        val t2 = bTs.construct(b2)
         t2.open.size shouldBe TicTacToe.size * TicTacToe.size - 2
         t2.render() shouldBe "\nX..\n0..\n...\n (0.0)"
     }
@@ -246,9 +247,12 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "get best play" in {
+        import TicTacToe.TicTacToeState$
         val z = implicitly[State[Board, TicTacToe]]
-        val qs: Seq[TicTacToe] = z.getStates(TicTacToe.parse(".........").get, maxPQ)
-        z.heuristic(qs.head) shouldBe 3
+        val qs: Seq[TicTacToe] = z.getStates(TicTacToe.parse(".........").get)
+        val pq: PriorityQueue[TicTacToe] = PriorityQueue.maxPQ(qs)
+        val (_, t) = pq.del
+        z.heuristic(t) shouldBe 3
     }
 
 }
