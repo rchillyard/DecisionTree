@@ -7,7 +7,6 @@ import com.phasmidsoftware.util.PriorityQueue
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-
 import scala.util.{Failure, Success, Try}
 
 class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
@@ -246,13 +245,80 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         z.heuristic(TicTacToe(TicTacToe.parse("....0..XX").get.play(xOrO = false)(2, 0))) shouldBe 6 // 0 block
     }
 
-    it should "get best play" in {
-        import TicTacToe.TicTacToeState$
-        val z = implicitly[State[Board, TicTacToe]]
-        val qs: Seq[TicTacToe] = z.getStates(TicTacToe.parse(".........").get)
-        val pq: PriorityQueue[TicTacToe] = PriorityQueue.maxPQ(qs)
-        val (_, t) = pq.del
-        z.heuristic(t) shouldBe 3
+    import TicTacToe.TicTacToeState$
+
+    private val bTs = implicitly[State[Board, TicTacToe]]
+
+    it should "get best X play from start" in {
+        val ss = bTs.getStates(TicTacToe.parse(".........").get)
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        t shouldBe TicTacToe.parse("....X....").get
+        bTs.heuristic(t) shouldBe 3
+    }
+
+    it should "get best 0 play from ....X...." in {
+        val ss = bTs.getStates(TicTacToe.parse("....X....").get)
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        t shouldBe TicTacToe.parse("..0.X....").get
+        bTs.heuristic(t) shouldBe 1
+    }
+
+    it should "get best X play from ..0.X...." in {
+        val ss = bTs.getStates(TicTacToe.parse("..0.X....").get)
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        t shouldBe TicTacToe.parse("..0.X...X").get
+        bTs.heuristic(t) shouldBe 5
+    }
+
+    it should "get best 0 play from ..0.X...X" in {
+        val ss = bTs.getStates(TicTacToe.parse("..0.X...X").get)
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        t shouldBe TicTacToe.parse("0.0.X...X").get
+        bTs.heuristic(t) shouldBe 6
+    }
+
+    it should "get best X play from 0.0.X...X" in {
+        val ss = bTs.getStates(TicTacToe.parse("0.0.X...X").get)
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        t shouldBe TicTacToe.parse("0X0.X...X").get
+        bTs.heuristic(t) shouldBe 6
+    }
+
+    it should "get best 0 play from 0X0.X...X" in {
+        val ss = bTs.getStates(TicTacToe.parse("0X0.X...X").get)
+        val expected = TicTacToe.parse("0X0.X..0X").get
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        println(t.render())
+        t shouldBe expected
+        bTs.heuristic(t) shouldBe 6
+    }
+
+    it should "get best X play from 0X0.X..0X" in {
+        val ss = bTs.getStates(TicTacToe.parse("0X0.X..0X").get)
+        val expected = TicTacToe.parse("0X0XX..0X").get
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        println(t.render())
+        t shouldBe expected
+        bTs.heuristic(t) shouldBe 5
+    }
+
+    it should "get best 0 play from 0X0XX..0X" in {
+        val ss = bTs.getStates(TicTacToe.parse("0X0XX..0X").get)
+        val expected = TicTacToe.parse("0X0XX0.0X").get
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        println(t.render())
+        t shouldBe expected
+        bTs.heuristic(t) shouldBe 6
+    }
+
+    it should "get best X play from 0X0XX0.0X" in {
+        val ss = bTs.getStates(TicTacToe.parse("0X0XX0.0X").get)
+        val expected = TicTacToe.parse("0X0XX0X0X").get
+        val (q, t) = PriorityQueue.maxPQ(ss).del
+        println(t.render())
+        q.isEmpty shouldBe true
+        t shouldBe expected
+        bTs.heuristic(t) shouldBe 2
     }
 
 }

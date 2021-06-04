@@ -5,7 +5,6 @@ import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.flog.Loggable
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
-
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -174,7 +173,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private def row(board: Board)(i: Int): Row = board.row(i)
 
-  private def rowsWithMask(board: Board): LazyList[RowWithMask] = LazyList.from(0).take(size).map(i => row(board)(i) -> TicTacToeOps.row(difference, i))
+  private def rowsWithMask(board: Board, mask: Row) = LazyList.from(0).take(size).map(i => row(board)(i) -> TicTacToeOps.row(mask, i))
 
   private def isMatch(f: Matching)(rs: LazyList[RowWithMask]): Cell = rs.map(f).foldLeft[Cell](None)((result, cell) => result orElse cell)
 
@@ -202,15 +201,16 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
     case _ => None
   }
 
+  private lazy val differenceTransposed: Row = transposeBoard(difference)
   private lazy val r0: Board = board
   private lazy val l0: Board = Board(transposeBoard(board.value))
   private lazy val r1: Board = Board(rotate(r0.value))
   private lazy val r2: Board = Board(rotate(r1.value))
   private lazy val r3: Board = Board(rotate(r2.value))
-  private lazy val rowsR0: LazyList[RowWithMask] = rowsWithMask(r0)
-  private lazy val rowsL0: LazyList[RowWithMask] = rowsWithMask(l0)
+  private lazy val rowsR0: LazyList[RowWithMask] = rowsWithMask(r0, difference)
+  private lazy val rowsL0: LazyList[RowWithMask] = rowsWithMask(l0, differenceTransposed)
   private lazy val diagR: RowWithMask = diagonal(r0.value) -> diagonal(difference)
-  private lazy val diagL: RowWithMask = diagonal(l0.value) -> diagonal(transposeBoard(difference))
+  private lazy val diagL: RowWithMask = diagonal(l0.value) -> diagonal(differenceTransposed)
   private lazy val diagonals: LazyList[RowWithMask] = diagR #:: diagL #:: LazyList.empty
 }
 
@@ -229,7 +229,6 @@ object TicTacToe {
      * Method to construct an S from the following parameters:
      *
      * @param proto a (Board, TicTacToe) tuple.
-     * @param q     a PriorityQueue.
      * @return an S.
      */
     def construct(proto: (Board, TicTacToe)): TicTacToe = TicTacToe(proto._1, Some(proto._2))
