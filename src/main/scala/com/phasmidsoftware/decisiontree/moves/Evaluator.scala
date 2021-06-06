@@ -1,25 +1,66 @@
 package com.phasmidsoftware.decisiontree.moves
 
-import com.phasmidsoftware.flog.{Flog, Loggable}
 import com.phasmidsoftware.util.PriorityQueue
 
 import scala.annotation.tailrec
 
 /**
- * Evaluate a game based on the State S.
+ * Trait to evaluate a state S according to some criterion.
  *
- * @tparam P the type of a parameter needed to construct a new S.
- * @tparam S the type of the game states, must support State.
+ * @tparam S the underlying type of the state to be evaluated.
  */
-class Evaluator[P, S: Loggable](implicit pSs: State[P, S]) {
-  val flog: Flog = Flog[Evaluator[P, S]]
-
+trait Evaluator[S] {
   /**
-   * Evaluate a game, starting with state s.
+   * Evaluate a game, starting with state based on s.
+   * If the starting state results in the achievement of a goal state, that state will be returned.
+   * If the result is None, then no goal state could be achieved.
    *
    * @param s the starting state.
-   * @return an Option[S]: if Some(s) then s is the first goal state to have been reached.
-   *         if None then the queue of possibility was exhausted.
+   * @return an Option[S]: if Some(s) then s is a goal state.
+   *         if None then no goal was achieved.
+   */
+  def evaluate(s: S): Option[S]
+
+  /**
+   * Method to determine a sequence of S which can follow s, the given S.
+   *
+   * @param s the given S.
+   * @return a sequence of S.
+   */
+  def states(s: S): Seq[S]
+}
+
+
+/**
+ * Abstract implementation of Evaluator[S] which depends on an implicit value of State[P, S].
+ *
+ * @tparam P the type of the proto-state, i.e. a parameter needed to construct a new S.
+ * @tparam S the underlying type of the state to be evaluated.
+ */
+abstract class Evaluator_State[P, S](implicit pSs: State[P, S]) extends Evaluator[S] {
+  /**
+   * Method to determine a sequence of S which can follow s, the given S.
+   *
+   * @param s the given S.
+   * @return a sequence of S.
+   */
+  def states(s: S): Seq[S] = pSs.getStates(s)
+}
+
+/**
+ * Implementation of Evaluator_State[P, S] which employs two priority queues (one for each player).
+ *
+ * @tparam P the type of the proto-state, i.e. a parameter needed to construct a new S.
+ * @tparam S the underlying type of the state to be evaluated.
+ */
+class Evaluator_PQ[P, S](implicit pSs: State[P, S]) extends Evaluator_State[P, S] {
+
+  /**
+   * Evaluate a game, starting with state based on s.
+   *
+   * @param s the starting state.
+   * @return an Option[S]: if Some(s) then s is a goal state.
+   *         if None then no goal was achieved.
    */
   def evaluate(s: S): Option[S] = {
     @tailrec
@@ -28,10 +69,8 @@ class Evaluator[P, S: Loggable](implicit pSs: State[P, S]) {
         None
       else {
         val (q, s) = q1.del
-        import flog._
-        "max" !! s
         if (pSs.isGoal(s).isDefined) Some(s)
-        else inner(q2.insertElements(pSs.getStates(s)), q)
+        else inner(q2.insertElements(states(s)), q)
       }
 
     inner(PriorityQueue.maxPQ(s), PriorityQueue.maxPQ)

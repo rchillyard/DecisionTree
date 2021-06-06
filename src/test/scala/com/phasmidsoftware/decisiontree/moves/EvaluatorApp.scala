@@ -5,7 +5,7 @@ import com.phasmidsoftware.flog.Loggable
 
 object EvaluatorApp extends App {
   implicit val z: Loggable[TicTacToe] = (t: TicTacToe) => t.render()
-  val eval = new Evaluator[Board, TicTacToe]
+  val eval = new Evaluator_PQ[Board, TicTacToe]
   val start: TicTacToe = TicTacToe()
   val so: Option[TicTacToe] = eval.evaluate(start)
   println(so)
