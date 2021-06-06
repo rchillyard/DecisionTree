@@ -5,6 +5,7 @@ import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.flog.Loggable
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
+
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -226,19 +227,12 @@ object TicTacToe {
   trait TicTacToeState$ extends State[Board, TicTacToe] {
 
     /**
-     * Method to construct an S from the following parameters:
+     * Method to construct an S from a proto-state:
      *
      * @param proto a (Board, TicTacToe) tuple.
-     * @return an S.
+     * @return a TicTacToe.
      */
     def construct(proto: (Board, TicTacToe)): TicTacToe = TicTacToe(proto._1, Some(proto._2))
-
-    /**
-     * Method to yield the previous state.
-     *
-     * @return an optional State[S].
-     */
-    def previous(s: TicTacToe): Option[TicTacToe] = s.maybePrior
 
     /**
      * In this game, all states are valid.

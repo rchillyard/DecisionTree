@@ -7,6 +7,7 @@ import com.phasmidsoftware.util.PriorityQueue
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+
 import scala.util.{Failure, Success, Try}
 
 class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
@@ -319,6 +320,15 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         q.isEmpty shouldBe true
         t shouldBe expected
         bTs.heuristic(t) shouldBe 2
+    }
+
+    it should "get best X play from X00.X..X0" in {
+        val ss = bTs.getStates(TicTacToe.parse("X00.X..X0").get)
+        val expected = TicTacToe.parse("X00.XX.X0").get
+        val (q, t) = PriorityQueue.maxPQ(ss).del
+        println(t.render())
+        t shouldBe expected
+        bTs.heuristic(t) shouldBe 6
     }
 
 }
