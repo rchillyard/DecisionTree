@@ -45,6 +45,16 @@ abstract class Evaluator_State[P, S](implicit pSs: State[P, S]) extends Evaluato
    * @return a sequence of S.
    */
   def states(s: S): Seq[S] = pSs.getStates(s)
+
+  /**
+   * Method to determine if a given S represents a "goal" state.
+   *
+   * @param s the given S.
+   * @return None if s is not a goal;
+   *         Some(false) if it is impossible to reach a goal state from s (typically a "draw");
+   *         Some(true) if s is a final goal.
+   */
+  def isGoal(s: S): Option[Boolean] = pSs.isGoal(s)
 }
 
 /**
@@ -63,16 +73,25 @@ class Evaluator_PQ[P, S](implicit pSs: State[P, S]) extends Evaluator_State[P, S
    *         if None then no goal was achieved.
    */
   def evaluate(s: S): Option[S] = {
+    def updatePQ(pq: PriorityQueue[S], s: S) = pq.insertElements(states(s))
+
     @tailrec
-    def inner(q1: PriorityQueue[S], q2: PriorityQueue[S]): Option[S] =
+    def inner(best: Option[S], q1: PriorityQueue[S], q2: PriorityQueue[S]): Option[S] =
       if (q1.isEmpty)
-        None
+        best
       else {
         val (q, s) = q1.del
-        if (pSs.isGoal(s).isDefined) Some(s)
-        else inner(q2.insertElements(states(s)), q)
+        isGoal(s) match {
+          case Some(true) if pSs.isWin(s) =>
+            Some(s)
+          case Some(false) =>
+            inner(Some(s), updatePQ(q2, s), q)
+          case _ =>
+            inner(best, updatePQ(q2, s), q)
+        }
       }
 
-    inner(PriorityQueue.maxPQ(s), PriorityQueue.maxPQ)
+    val result = inner(None, PriorityQueue.maxPQ(s), PriorityQueue.maxPQ)
+    result
   }
 }

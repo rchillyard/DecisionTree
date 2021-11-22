@@ -30,7 +30,7 @@ class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
     val pq = PriorityQueue.maxPQ(ts)
     pq.isEmpty shouldBe false
     val (_, t) = pq.del
-    bTs.heuristic(t) shouldBe 3
+    bTs.heuristic(t) shouldBe 4
     println(t.history)
   }
 

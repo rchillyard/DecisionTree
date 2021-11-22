@@ -110,14 +110,16 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         rowLine(0x2A) shouldBe 2
     }
     it should "parseString" in {
-        parseString("X..X..X..").board.value shouldBe 0x41040000
-        parseString("XXX......").board.value shouldBe 0x54000000
-        parseString("X.X......").board.value shouldBe 0x44000000
-        parseString("0.0......").board.value shouldBe 0x88000000
-        parseString("XX.......").board.value shouldBe 0x50000000
-        parseString("00.......").board.value shouldBe 0xA0000000
-        parseString(".XX......").board.value shouldBe 0x14000000
-        parseString(".00......").board.value shouldBe 0x28000000
+        parseString("X..X..X..", None).board.value shouldBe 0x41040000
+        parseString("X..X...X.", None).board.value shouldBe 0x41010000
+        parseString("X..X....X", None).board.value shouldBe 0x41004000
+        parseString("XXX......", None).board.value shouldBe 0x54000000
+        parseString("X.X......", None).board.value shouldBe 0x44000000
+        parseString("0.0......", None).board.value shouldBe 0x88000000
+        parseString("XX.......", None).board.value shouldBe 0x50000000
+        parseString("00.......", None).board.value shouldBe 0xA0000000
+        parseString(".XX......", None).board.value shouldBe 0x14000000
+        parseString(".00......", None).board.value shouldBe 0x28000000
     }
     it should "rowLinePending" in {
         rowLinePending(0x00) shouldBe 0
@@ -150,7 +152,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val bTs = implicitly[State[Board, TicTacToe]]
         val t1 = bTs.construct(b1)
         t1.open.size shouldBe TicTacToe.size * TicTacToe.size - 1
-        t1.render() shouldBe "\nX..\n...\n...\n (1.0)"
+        t1.render() shouldBe "\nX..\n...\n...\n (4.0)"
     }
 
     it should "play false, 1, 0" in {
@@ -210,10 +212,16 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "peneWin" in {
-        TicTacToe.from(0x44000000).peneWin shouldBe Some(true)
-        TicTacToe.from(0x40040000).peneWin shouldBe Some(true)
-        TicTacToe.from(0x40400000).peneWin shouldBe Some(true)
+        TicTacToe.from(0x44000000, None).peneWin shouldBe Some(true)
+        TicTacToe.from(0x40040000, None).peneWin shouldBe Some(true)
+        TicTacToe.from(0x40400000, None).peneWin shouldBe Some(true)
         TicTacToe.parse(".00     0").get.peneWin shouldBe Some(false)
+    }
+
+    it should "fork" in {
+        TicTacToe.parse("..0.X0.XX").get.fork shouldBe Some(true)
+        TicTacToe.parse("..0.X0X.X").get.fork shouldBe Some(true)
+        TicTacToe.parse("..0XX0..X").get.fork shouldBe None
     }
 
     it should "block" in {
@@ -226,10 +234,37 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         z.heuristic(TicTacToe.parse("   XXX   ").get) shouldBe 7 // X win
         z.heuristic(TicTacToe.parse("      XXX").get) shouldBe 7 // X win
         z.heuristic(TicTacToe.parse("000   X  ").get) shouldBe 7 // 0 win
-        z.heuristic(TicTacToe.parse("0 0      ").get) shouldBe 5 // 0 pending
-        z.heuristic(TicTacToe.parse("   X X  0").get) shouldBe 5 // X pending
-        z.heuristic(TicTacToe.parse("0     X X").get) shouldBe 5 // X pending
+        z.heuristic(TicTacToe.parse("0 0      ").get) shouldBe 4 // 0 pending
+        z.heuristic(TicTacToe.parse("   X X  0").get) shouldBe 4 // X pending
+        z.heuristic(TicTacToe.parse("0     X X").get) shouldBe 4 // X pending
+    }
 
+    it should "corner" in {
+        TicTacToe.parse("X........").get.corner shouldBe true
+        TicTacToe.parse(".X.......").get.corner shouldBe false
+        TicTacToe.parse("..X......").get.corner shouldBe true
+        TicTacToe.parse("...X.....").get.corner shouldBe false
+        TicTacToe.parse("....X....").get.corner shouldBe false
+        TicTacToe.parse(".....X...").get.corner shouldBe false
+        TicTacToe.parse("......X..").get.corner shouldBe true
+        TicTacToe.parse(".......X.").get.corner shouldBe false
+        TicTacToe.parse("........X").get.corner shouldBe true
+    }
+
+    it should "oppositeCorner" in {
+        TicTacToe.parse("X.......O", Some(0x00008000)).get.oppositeCorner shouldBe true
+        TicTacToe.parse(".X......0", Some(0x00008000)).get.oppositeCorner shouldBe false
+        TicTacToe.parse("..X...0..", Some(0x00080000)).get.oppositeCorner shouldBe true
+    }
+
+    it should "oppHasCenter" in {
+        TicTacToe.parse("X...0....", Some(0x40000000)).get.oppHasCenter shouldBe true
+    }
+
+    // TODO there is something strange about oppositeCorner
+    ignore should "weHaveOppositeCorner" in {
+        val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
+        t.weHaveOppositeCorner shouldBe true
     }
 
     it should "heuristic where difference may matter" in {
@@ -253,8 +288,8 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     it should "get best X play from start" in {
         val ss = bTs.getStates(TicTacToe.parse(".........").get)
         val (_, t) = PriorityQueue.maxPQ(ss).del
-        t shouldBe TicTacToe.parse("....X....").get
-        bTs.heuristic(t) shouldBe 3
+        t shouldBe TicTacToe.parse("X........").get
+        bTs.heuristic(t) shouldBe 4
     }
 
     it should "get best 0 play from ....X...." in {
@@ -268,7 +303,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse("..0.X....").get)
         val (_, t) = PriorityQueue.maxPQ(ss).del
         t shouldBe TicTacToe.parse("..0.X...X").get
-        bTs.heuristic(t) shouldBe 5
+        bTs.heuristic(t) shouldBe 4
     }
 
     it should "get best 0 play from ..0.X...X" in {
@@ -300,7 +335,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val (_, t) = PriorityQueue.maxPQ(ss).del
         println(t.render())
         t shouldBe expected
-        bTs.heuristic(t) shouldBe 5
+        bTs.heuristic(t) shouldBe 4
     }
 
     it should "get best 0 play from 0X0XX..0X" in {

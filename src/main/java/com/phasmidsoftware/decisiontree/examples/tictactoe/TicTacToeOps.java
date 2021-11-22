@@ -4,7 +4,7 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe;
 public class TicTacToeOps {
 
     /**
-     * Parse and array of ints, each one either 0 (open), 1 (X), or 2 (0).
+     * Parse an array of ints, each one either 0 (open), 1 (X), or 2 (0).
      *
      * @param a an array of 9 ints.
      * @return the encoding of the board.

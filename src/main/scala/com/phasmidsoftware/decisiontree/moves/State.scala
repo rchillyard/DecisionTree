@@ -29,6 +29,15 @@ trait State[P, S] extends Ordering[S] {
   def isValid(s: S): Boolean
 
   /**
+   * Method to determine if s is a winning state.
+   * NOTE: it makes no sense to invoke isWin unless the result of isGoal is Some(true).
+   *
+   * @param s an S
+   * @return true if s is a win, else false.
+   */
+  def isWin(s: S): Boolean
+
+  /**
    * Abstract method to determine if state s is a goal state.
    * In some games, the goal is to win.
    * In other games, for example contract bridge, the goal is to achieve some measurable state,
