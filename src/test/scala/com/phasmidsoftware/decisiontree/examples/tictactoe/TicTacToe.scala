@@ -169,7 +169,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
               case _
                 if center => 3
               case _
-                if oppositeCorner => 2
+                if oppositeCorner(true) => 2
               case _
                 if corner && oppHasCenter && weHaveOppositeCorner => 2
               case _
@@ -181,19 +181,23 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
       }
   }
 
-  lazy val center = (difference & 0xC00000) != 0
+  lazy val center = (currentMove & 0xC00000) != 0
 
-  lazy val difference = maybePrior map (p => board.value ^ p.board.value) getOrElse board.value
+  lazy val currentMove: Row = maybePrior map (p => board.value ^ p.board.value) getOrElse board.value
 
-  lazy val oppositeCorner = corner && (opposite(r0, r2) || opposite(r1, r3))
+  lazy val maybeOpponentMove: Option[Row] = maybePrior map (_.currentMove)
+
+  lazy val maybePreviousMove: Option[Row] = maybePrior flatMap (_.maybeOpponentMove)
+
+  def oppositeCorner(opponent: Boolean) = corner && (opposite(r0, r2) || opposite(r1, r3))
 
   def opposite(r0: Board, r1: Board): Boolean = ((r0.value ^ r1.value) & 0xC0000000) == 0xC0000000
 
-  lazy val corner = (difference & 0xCC0CC000) != 0
+  lazy val corner = (currentMove & 0xCC0CC000) != 0
 
   def oppHasCenter: Boolean = maybePrior exists (_.center)
 
-  def weHaveOppositeCorner: Boolean = maybePrior flatMap (_.maybePrior) exists (_.oppositeCorner)
+  def weHaveOppositeCorner: Boolean = oppositeCorner(false) //maybePrior flatMap (_.maybePrior) exists (_.oppositeCorner)
 
   private lazy val firstAndTopLeftCorner = board.value == 0x40000000
 
@@ -227,15 +231,15 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
     case _ => None
   }
 
-  private lazy val differenceTransposed: Row = transposeBoard(difference)
+  private lazy val differenceTransposed: Row = transposeBoard(currentMove)
   private lazy val r0: Board = board
   private lazy val l0: Board = Board(transposeBoard(board.value))
   private lazy val r1: Board = Board(rotate(r0.value))
   private lazy val r2: Board = Board(rotate(r1.value))
   private lazy val r3: Board = Board(rotate(r2.value))
-  private lazy val rowsR0: LazyList[RowWithMask] = rowsWithMask(r0, difference)
+  private lazy val rowsR0: LazyList[RowWithMask] = rowsWithMask(r0, currentMove)
   private lazy val rowsL0: LazyList[RowWithMask] = rowsWithMask(l0, differenceTransposed)
-  private lazy val diagR: RowWithMask = diagonal(r0.value) -> diagonal(difference)
+  private lazy val diagR: RowWithMask = diagonal(r0.value) -> diagonal(currentMove)
   private lazy val diagL: RowWithMask = diagonal(l0.value) -> diagonal(differenceTransposed)
   private lazy val diagonals: LazyList[RowWithMask] = diagR #:: diagL #:: LazyList.empty
 }

@@ -251,10 +251,22 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         TicTacToe.parse("........X").get.corner shouldBe true
     }
 
+    it should "exchange" in {
+        val x = TicTacToe.parse("XXXXXXXXX").get.board.value
+        val y = TicTacToe.parse("000000000").get.board.value
+        exchange(x) shouldBe y
+    }
+
+    it should "exchange2" in {
+        val x = TicTacToe.parse("X.......O").get.board.value
+        val y = TicTacToe.parse("0.......X").get.board.value
+        exchange(x) shouldBe y
+    }
+
     it should "oppositeCorner" in {
-        TicTacToe.parse("X.......O", Some(0x00008000)).get.oppositeCorner shouldBe true
-        TicTacToe.parse(".X......0", Some(0x00008000)).get.oppositeCorner shouldBe false
-        TicTacToe.parse("..X...0..", Some(0x00080000)).get.oppositeCorner shouldBe true
+        TicTacToe.parse("X.......O", Some(0x00008000)).get.oppositeCorner(true) shouldBe true
+        TicTacToe.parse(".X......0", Some(0x00008000)).get.oppositeCorner(true) shouldBe false
+        TicTacToe.parse("..X...0..", Some(0x00080000)).get.oppositeCorner(true) shouldBe true
     }
 
     it should "oppHasCenter" in {
@@ -265,6 +277,21 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     ignore should "weHaveOppositeCorner" in {
         val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
         t.weHaveOppositeCorner shouldBe true
+    }
+
+    it should "currentMove" in {
+        val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
+        t.currentMove shouldBe 0x4000
+    }
+
+    it should "maybeOpponentMove" in {
+        val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
+        t.maybeOpponentMove shouldBe Some(0x800000)
+    }
+
+    it should "maybePreviousMove" in {
+        val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
+        t.maybePreviousMove shouldBe Some(0x40000000)
     }
 
     it should "heuristic where difference may matter" in {

@@ -102,6 +102,25 @@ public class TicTacToeOps {
     }
 
     /**
+     * Method to exchange the X/O bits of the given board (x).
+     *
+     * @param x the bits of a Board.
+     * @return the bits of a Board with Xs swapped for Os.
+     */
+    public static long exchange(long x) {
+        int z = 0;
+        for (int i = 0; i < 9; i++) {
+            z = z >> 2;
+            long y = x & 0xC000;
+            if (y == 0x4000) z |= 0x80000;
+            else if (y == 0x8000) z |= 0x40000;
+            x = x >> 2;
+        }
+        z = z << 12;
+        return z;
+    }
+
+    /**
      * Perform a flip about a horizontal line.
      * This transforms, for example, R0 into L0.
      *
