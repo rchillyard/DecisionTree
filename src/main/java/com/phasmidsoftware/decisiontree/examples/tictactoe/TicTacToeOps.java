@@ -98,7 +98,7 @@ public class TicTacToeOps {
      * @return a Board which is the transpose of x.
      */
     public static int transposeBoard(int x) {
-        return rotate(hFlip(x));
+        return rotateBoard(hFlip(x));
     }
 
     /**
@@ -132,13 +132,13 @@ public class TicTacToeOps {
     }
 
     /**
-     * Perform a 90 degree (clockwise) rotation about a the center cell.
+     * Perform a 90 degree (clockwise) rotation about the center cell.
      * This transforms, for example, R0 into R1 or L0 into L1.
      *
      * @param x the bit pattern to be rotated.
      * @return the rotated bit pattern.
      */
-    public static int rotate(int x) {
+    public static int rotateBoard(int x) {
         long y = (long) x & 0x00000000FFFFFFFFL;
         long z = flip(y, 0, 2) | flip(y, 1, 4) | flip(y, 2, 6) | flip(y, 3, -2) | flip(y, 4, 0) | flip(y, 5, 2) | flip(y, 6, -6) | flip(y, 7, -4) | flip(y, 8, -2);
         return (int) (z >> 32);

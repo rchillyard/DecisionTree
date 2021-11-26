@@ -7,7 +7,6 @@ import com.phasmidsoftware.util.PriorityQueue
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-
 import scala.util.{Failure, Success, Try}
 
 class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
@@ -43,27 +42,27 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
     // CONSIDER skipping the toHexString part
     it should "rotate to hex string" in {
-        rotate(0xC0000000).toHexString shouldBe "c000000"
-        rotate(0x30000000).toHexString shouldBe "300000"
-        rotate(0x0C000000).toHexString shouldBe "c000"
-        rotate(0x03000000).toHexString shouldBe "30000000"
-        rotate(0x00C00000).toHexString shouldBe "c00000"
-        rotate(0x00300000).toHexString shouldBe "30000"
-        rotate(0x000C0000).toHexString shouldBe "c0000000"
-        rotate(0x00030000).toHexString shouldBe "3000000"
-        rotate(0x0000C000).toHexString shouldBe "c0000"
+        rotateBoard(0xC0000000).toHexString shouldBe "c000000"
+        rotateBoard(0x30000000).toHexString shouldBe "300000"
+        rotateBoard(0x0C000000).toHexString shouldBe "c000"
+        rotateBoard(0x03000000).toHexString shouldBe "30000000"
+        rotateBoard(0x00C00000).toHexString shouldBe "c00000"
+        rotateBoard(0x00300000).toHexString shouldBe "30000"
+        rotateBoard(0x000C0000).toHexString shouldBe "c0000000"
+        rotateBoard(0x00030000).toHexString shouldBe "3000000"
+        rotateBoard(0x0000C000).toHexString shouldBe "c0000"
     }
     it should "transpose to Int using hFlip and rotate" in {
-        rotate(hFlip(0xC0000000)) shouldBe 0xC0000000
-        rotate(hFlip(0x30000000)) shouldBe 0x03000000
-        rotate(hFlip(0x0C000000)) shouldBe 0x000C0000
-        rotate(hFlip(0x03000000)) shouldBe 0x30000000
-        rotate(hFlip(0x00C00000)) shouldBe 0xc00000
-        rotate(hFlip(0x00300000)) shouldBe 0x30000
-        rotate(hFlip(0x000C0000)) shouldBe 0xc000000
-        rotate(hFlip(0x00030000)) shouldBe 0x300000
-        rotate(hFlip(0x0000C000)) shouldBe 0xc000
-        rotate(hFlip(0x44000000)) shouldBe 0x40040000
+        rotateBoard(hFlip(0xC0000000)) shouldBe 0xC0000000
+        rotateBoard(hFlip(0x30000000)) shouldBe 0x03000000
+        rotateBoard(hFlip(0x0C000000)) shouldBe 0x000C0000
+        rotateBoard(hFlip(0x03000000)) shouldBe 0x30000000
+        rotateBoard(hFlip(0x00C00000)) shouldBe 0xc00000
+        rotateBoard(hFlip(0x00300000)) shouldBe 0x30000
+        rotateBoard(hFlip(0x000C0000)) shouldBe 0xc000000
+        rotateBoard(hFlip(0x00030000)) shouldBe 0x300000
+        rotateBoard(hFlip(0x0000C000)) shouldBe 0xc000
+        rotateBoard(hFlip(0x44000000)) shouldBe 0x40040000
 
     }
     it should "transpose to Int" in {
@@ -274,7 +273,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     // TODO there is something strange about oppositeCorner
-    ignore should "weHaveOppositeCorner" in {
+    it should "weHaveOppositeCorner" in {
         val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
         t.weHaveOppositeCorner shouldBe true
     }
@@ -323,7 +322,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse("....X....").get)
         val (_, t) = PriorityQueue.maxPQ(ss).del
         t shouldBe TicTacToe.parse("..0.X....").get
-        bTs.heuristic(t) shouldBe 1
+        bTs.heuristic(t) shouldBe 2
     }
 
     it should "get best X play from ..0.X...." in {
@@ -387,7 +386,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     it should "get best X play from X00.X..X0" in {
         val ss = bTs.getStates(TicTacToe.parse("X00.X..X0").get)
         val expected = TicTacToe.parse("X00.XX.X0").get
-        val (q, t) = PriorityQueue.maxPQ(ss).del
+        val (_, t) = PriorityQueue.maxPQ(ss).del
         println(t.render())
         t shouldBe expected
         bTs.heuristic(t) shouldBe 6

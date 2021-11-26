@@ -6,7 +6,6 @@ import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.flog.Loggable
 import com.phasmidsoftware.util.Aggregators.{hasOne, hasTwo}
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
-
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -181,7 +180,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
       }
   }
 
-  lazy val center = (currentMove & 0xC00000) != 0
+  private lazy val center = (currentMove & 0xC00000) != 0
 
   lazy val currentMove: Row = maybePrior map (p => board.value ^ p.board.value) getOrElse board.value
 
@@ -189,11 +188,25 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   lazy val maybePreviousMove: Option[Row] = maybePrior flatMap (_.maybeOpponentMove)
 
-  def oppositeCorner(opponent: Boolean) = corner && (opposite(r0, r2) || opposite(r1, r3))
+  /**
+   * @param opponent if true then the opposite corner must be the opponent.
+   * @return true if this TicTacToe is a corner position and if the opponent (if true, else self) occupies the opposite corner.
+   */
+  def oppositeCorner(opponent: Boolean): Boolean = {
+    val maskTopLeft = 0xC0000000
+    val patternTopLeft = if (opponent) maskTopLeft else 0
+    val f = complementary(maskTopLeft, patternTopLeft)(_, _)
+    corner && (f(r0, r2) || f(r1, r3))
+  }
 
-  def opposite(r0: Board, r1: Board): Boolean = ((r0.value ^ r1.value) & 0xC0000000) == 0xC0000000
+  /**
+   * @param b1 a Board.
+   * @param b2 another Board.
+   * @return true if the XOR of the two boards masked by mask is equal to pattern.
+   */
+  def complementary(mask: Row, pattern: Row)(b1: Board, b2: Board): Boolean = ((b1.value ^ b2.value) & mask) == pattern
 
-  lazy val corner = (currentMove & 0xCC0CC000) != 0
+  lazy val corner: Boolean = (currentMove & 0xCC0CC000) != 0
 
   def oppHasCenter: Boolean = maybePrior exists (_.center)
 
@@ -233,10 +246,10 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private lazy val differenceTransposed: Row = transposeBoard(currentMove)
   private lazy val r0: Board = board
-  private lazy val l0: Board = Board(transposeBoard(board.value))
-  private lazy val r1: Board = Board(rotate(r0.value))
-  private lazy val r2: Board = Board(rotate(r1.value))
-  private lazy val r3: Board = Board(rotate(r2.value))
+  private lazy val l0: Board = board.transpose
+  private lazy val r1: Board = r0.rotate
+  private lazy val r2: Board = r1.rotate
+  private lazy val r3: Board = r2.rotate
   private lazy val rowsR0: LazyList[RowWithMask] = rowsWithMask(r0, currentMove)
   private lazy val rowsL0: LazyList[RowWithMask] = rowsWithMask(l0, differenceTransposed)
   private lazy val diagR: RowWithMask = diagonal(r0.value) -> diagonal(currentMove)
@@ -418,4 +431,6 @@ case class Board(value: Int) extends AnyVal {
   def render: String = TicTacToeOps.render(value)
 
   def transpose: Board = Board(transposeBoard(value))
+
+  def rotate: Board = Board(TicTacToeOps.rotateBoard(value))
 }
