@@ -74,7 +74,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * @param col  the column at which the mark should be made.
    * @return a new Board with the appropriate Cell marked.
    */
-  def play(xOrO: Boolean)(row: Int, col: Int): Prototype = Board(TicTacToeOps.play(board.value, xOrO, row, col)) -> this
+  def play(xOrO: Boolean)(row: Int, col: Int): Prototype = board.play(xOrO, row, col) -> this
 
   /**
    * Method to create a string of Xs and 0s corresponding to this TicTacToe position.
@@ -84,7 +84,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    *
    * @return a String which is a rendition of the current state.
    */
-  def render(): String = s"\n${TicTacToeOps.render(board.value)} ($heuristic)"
+  def render(): String = s"\n${board.render} ($heuristic)"
 
   /**
    * The history of a TicTacToe position, as a String.
@@ -195,7 +195,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
   def oppositeCorner(opponent: Boolean): Boolean = {
     val maskTopLeft = 0xC0000000
     val patternTopLeft = if (opponent) maskTopLeft else 0
-    val f = complementary(maskTopLeft, patternTopLeft)(_, _)
+    val f = maskMatch(maskTopLeft, patternTopLeft)(_, _)
     corner && (f(r0, r2) || f(r1, r3))
   }
 
@@ -204,7 +204,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * @param b2 another Board.
    * @return true if the XOR of the two boards masked by mask is equal to pattern.
    */
-  def complementary(mask: Row, pattern: Row)(b1: Board, b2: Board): Boolean = ((b1.value ^ b2.value) & mask) == pattern
+  def maskMatch(mask: Row, pattern: Row)(b1: Board, b2: Board): Boolean = ((b1.value ^ b2.value) & mask) == pattern
 
   lazy val corner: Boolean = (currentMove & 0xCC0CC000) != 0
 
@@ -430,7 +430,11 @@ case class Board(value: Int) extends AnyVal {
 
   def render: String = TicTacToeOps.render(value)
 
+  def play(xOrO: Boolean, row: Row, col: Row): Board = Board(playBoard(value, xOrO, row, col))
+
   def transpose: Board = Board(transposeBoard(value))
 
-  def rotate: Board = Board(TicTacToeOps.rotateBoard(value))
+  def rotate: Board = Board(rotateBoard(value))
+
+  def exchange: Board = Board(exchangeBoard(value))
 }

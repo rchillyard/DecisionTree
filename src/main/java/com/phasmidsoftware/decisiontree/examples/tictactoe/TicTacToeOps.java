@@ -85,7 +85,7 @@ public class TicTacToeOps {
      * @param j      the column index.
      * @return the bits of x OR'd with a bit representing the play.
      */
-    public static int play(int x, boolean player, int i, int j) {
+    public static int playBoard(int x, boolean player, int i, int j) {
         return x | (player ? 1 : 2) << (62 - i * 6 - j * 2);
     }
 
@@ -107,11 +107,11 @@ public class TicTacToeOps {
      * @param x the bits of a Board.
      * @return the bits of a Board with Xs swapped for Os.
      */
-    public static long exchange(long x) {
+    public static int exchangeBoard(int x) {
         int z = 0;
         for (int i = 0; i < 9; i++) {
             z = z >> 2;
-            long y = x & 0xC000;
+            int y = x & 0xC000;
             if (y == 0x4000) z |= 0x80000;
             else if (y == 0x8000) z |= 0x40000;
             x = x >> 2;

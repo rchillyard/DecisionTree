@@ -22,9 +22,9 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         render(0x40000000) shouldBe "X..\n...\n...\n"
     }
     it should "play" in {
-        val board1 = play(0, true, 0, 0)
+        val board1 = playBoard(0, true, 0, 0)
         board1 shouldBe 0x40000000
-        val board2 = play(board1, false, 2, 0)
+        val board2 = playBoard(board1, false, 2, 0)
         render(board2) shouldBe "X..\n...\n0..\n"
         board2 shouldBe 0x40080000
     }
@@ -253,13 +253,13 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     it should "exchange" in {
         val x = TicTacToe.parse("XXXXXXXXX").get.board.value
         val y = TicTacToe.parse("000000000").get.board.value
-        exchange(x) shouldBe y
+        exchangeBoard(x) shouldBe y
     }
 
     it should "exchange2" in {
         val x = TicTacToe.parse("X.......O").get.board.value
         val y = TicTacToe.parse("0.......X").get.board.value
-        exchange(x) shouldBe y
+        exchangeBoard(x) shouldBe y
     }
 
     it should "oppositeCorner" in {
