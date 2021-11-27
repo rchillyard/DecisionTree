@@ -175,7 +175,8 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "parse" in {
-        TicTacToe.parse("         ") should matchPattern { case Success(TicTacToe.start) => }
+        val target = TicTacToe.parse("         ")
+        target should matchPattern { case Success(TicTacToe.start) => }
         val ty1 = TicTacToe.parse("X        ")
         ty1 should matchPattern { case Success(_) => }
         ty1.get shouldBe TicTacToe(TicTacToe().playX(0, 0))
@@ -218,6 +219,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "fork" in {
+//        TicTacToe.parse("..X.0XX00").get.fork shouldBe Some(true)
         TicTacToe.parse("..0.X0.XX").get.fork shouldBe Some(true)
         TicTacToe.parse("..0.X0X.X").get.fork shouldBe Some(true)
         TicTacToe.parse("..0XX0..X").get.fork shouldBe None
@@ -272,7 +274,6 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         TicTacToe.parse("X...0....", Some(0x40000000)).get.oppHasCenter shouldBe true
     }
 
-    // TODO there is something strange about oppositeCorner
     it should "weHaveOppositeCorner" in {
         val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
         t.weHaveOppositeCorner shouldBe true
@@ -280,17 +281,17 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
 
     it should "currentMove" in {
         val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
-        t.currentMove shouldBe 0x4000
+        t.currentMove.value shouldBe 0x4000
     }
 
     it should "maybeOpponentMove" in {
         val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
-        t.maybeOpponentMove shouldBe Some(0x800000)
+        t.maybeOpponentMove shouldBe Some(Board(0x800000))
     }
 
     it should "maybePreviousMove" in {
         val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
-        t.maybePreviousMove shouldBe Some(0x40000000)
+        t.maybePreviousMove shouldBe Some(Board(0x40000000))
     }
 
     it should "heuristic where difference may matter" in {
@@ -307,6 +308,8 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         z.heuristic(TicTacToe(TicTacToe.parse("....0..XX").get.play(xOrO = false)(2, 0))) shouldBe 6 // 0 block
     }
 
+    behavior of "PriorityQueue"
+
     import TicTacToe.TicTacToeState$
 
     private val bTs = implicitly[State[Board, TicTacToe]]
@@ -315,6 +318,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse(".........").get)
         val (_, t) = PriorityQueue.maxPQ(ss).del
         t shouldBe TicTacToe.parse("X........").get
+        t.board.render shouldBe "40000000"
         bTs.heuristic(t) shouldBe 4
     }
 
@@ -322,7 +326,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse("....X....").get)
         val (_, t) = PriorityQueue.maxPQ(ss).del
         t shouldBe TicTacToe.parse("..0.X....").get
-        bTs.heuristic(t) shouldBe 2
+        bTs.heuristic(t) shouldBe 3
     }
 
     it should "get best X play from ..0.X...." in {
@@ -350,7 +354,6 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse("0X0.X...X").get)
         val expected = TicTacToe.parse("0X0.X..0X").get
         val (_, t) = PriorityQueue.maxPQ(ss).del
-        println(t.render())
         t shouldBe expected
         bTs.heuristic(t) shouldBe 6
     }
@@ -377,7 +380,6 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse("0X0XX0.0X").get)
         val expected = TicTacToe.parse("0X0XX0X0X").get
         val (q, t) = PriorityQueue.maxPQ(ss).del
-        println(t.render())
         q.isEmpty shouldBe true
         t shouldBe expected
         bTs.heuristic(t) shouldBe 2
@@ -387,9 +389,16 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse("X00.X..X0").get)
         val expected = TicTacToe.parse("X00.XX.X0").get
         val (_, t) = PriorityQueue.maxPQ(ss).del
-        println(t.render())
         t shouldBe expected
         bTs.heuristic(t) shouldBe 6
+    }
+
+    it should "get best X play from X00X...X0" in {
+        val ss = bTs.getStates(TicTacToe.parse("X00X...X0").get)
+        val expected = TicTacToe.parse("X00X..XX0").get
+        val (_, t) = PriorityQueue.maxPQ(ss).del
+        t shouldBe expected
+        bTs.heuristic(t) shouldBe 7
     }
 
 }

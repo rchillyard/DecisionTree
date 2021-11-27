@@ -3,7 +3,7 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.{Prototype, size}
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
-import com.phasmidsoftware.flog.Loggable
+import com.phasmidsoftware.flog.{Flog, Loggable}
 import com.phasmidsoftware.util.Aggregators.{hasOne, hasTwo}
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
 import scala.util.{Failure, Success, Try}
@@ -84,7 +84,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    *
    * @return a String which is a rendition of the current state.
    */
-  def render(): String = s"\n${board.render} ($heuristic)"
+  def render(): String = s"\n${TicTacToeOps.render(board.value)} ($heuristic)"
 
   /**
    * The history of a TicTacToe position, as a String.
@@ -99,7 +99,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    *
    * @return a String of hexadecimal characters of length 8.
    */
-  override def toString: String = s"$board"
+  override def toString: String = render() // s"$board"
 
   /**
    * The list of open cells for this TicTacToe.
@@ -148,45 +148,61 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    */
   def draw: Cell = if (open.isEmpty) Some(false) else None
 
+  private val flog = Flog[TicTacToe]
+
+  import flog._
+
   private lazy val heuristic: Double = win match {
     case Some(x)
-      if x == player => 7
+      if x == player =>
+      s"given $maybePrior chosen $board with " !| 7
     case _ =>
+      val centerOpp = oppHasCenter
+      val ourOppCorner = weHaveOppositeCorner
+      val message = s"given $maybePrior chosen $board with "
       block match {
         case Some(y)
-          if y == player => 6
+          if y == player =>
+          message !| 6
         case _ =>
           fork match {
-            case Some(x) if x == player => 5
+            case Some(x) if x == player =>
+              message !| 5
             case _ => peneWin match {
               case Some(x)
-                if x == player => 4
+                if x == player =>
+                message !| 4
               case _
                 // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
                 // Nevertheless, we force the top-left corner.
-                if firstAndTopLeftCorner => 4
+                if firstAndTopLeftCorner =>
+                message !| 4
               case _
-                if center => 3
+                if center =>
+                message !| 3
               case _
-                if oppositeCorner(true) => 2
+                if corner && centerOpp && ourOppCorner =>
+                message !| 3
               case _
-                if corner && oppHasCenter && weHaveOppositeCorner => 2
+                if oppositeCorner(true) =>
+                message !| 2
               case _
-                if corner => 1
+                if corner =>
+                message !| 1
               case _ =>
-                0
+                s"given $maybePrior defaulted to $board with " !| 0
             }
           }
       }
   }
 
-  private lazy val center = (currentMove & 0xC00000) != 0
+  private lazy val center = currentMove.center
 
-  lazy val currentMove: Row = maybePrior map (p => board.value ^ p.board.value) getOrElse board.value
+  lazy val currentMove: Board = maybePrior map (p => board ^ p.board) getOrElse board
 
-  lazy val maybeOpponentMove: Option[Row] = maybePrior map (_.currentMove)
+  lazy val maybeOpponentMove: Option[Board] = maybePrior map (_.currentMove)
 
-  lazy val maybePreviousMove: Option[Row] = maybePrior flatMap (_.maybeOpponentMove)
+  lazy val maybePreviousMove: Option[Board] = maybePrior flatMap (_.maybeOpponentMove)
 
   /**
    * @param opponent if true then the opposite corner must be the opponent.
@@ -204,9 +220,9 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * @param b2 another Board.
    * @return true if the XOR of the two boards masked by mask is equal to pattern.
    */
-  def maskMatch(mask: Row, pattern: Row)(b1: Board, b2: Board): Boolean = ((b1.value ^ b2.value) & mask) == pattern
+  def maskMatch(mask: Int, pattern: Int)(b1: Board, b2: Board): Boolean = ((b1.value ^ b2.value) & mask) == pattern
 
-  lazy val corner: Boolean = (currentMove & 0xCC0CC000) != 0
+  lazy val corner: Boolean = currentMove.corner
 
   def oppHasCenter: Boolean = maybePrior exists (_.center)
 
@@ -216,13 +232,13 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private def row(board: Board)(i: Int): Row = board.row(i)
 
-  private def rowsWithMask(board: Board, mask: Row) = LazyList.from(0).take(size).map(i => row(board)(i) -> TicTacToeOps.row(mask, i))
+  private def rowsWithMask(board: Board, mask: Int) = LazyList.from(0).take(size).map(i => row(board)(i) -> TicTacToeOps.row(mask, i))
 
   private def isMatch(f: Matching)(rs: LazyList[RowWithMask]): Cell = rs.map(f).foldLeft[Cell](None)((result, cell) => result orElse cell)
 
   private def isWin(rs: LazyList[RowWithMask]): Cell = isMatch(isLine)(rs)
 
-  private def isPendingWin(rs: LazyList[RowWithMask]): Cell = isMatch(isLinePending)(rs)
+  private def isPendingWin(rs: LazyList[RowWithMask]): Cell = s"isPendingWin $rs: " !! isMatch(isLinePending)(rs)
 
   private def isBlock(rs: LazyList[RowWithMask]): Cell = isMatch(isBlocking)(rs)
 
@@ -244,16 +260,16 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
     case _ => None
   }
 
-  private lazy val differenceTransposed: Row = transposeBoard(currentMove)
+  private lazy val differenceTransposed: Board = currentMove.transpose
   private lazy val r0: Board = board
   private lazy val l0: Board = board.transpose
   private lazy val r1: Board = r0.rotate
   private lazy val r2: Board = r1.rotate
   private lazy val r3: Board = r2.rotate
-  private lazy val rowsR0: LazyList[RowWithMask] = rowsWithMask(r0, currentMove)
-  private lazy val rowsL0: LazyList[RowWithMask] = rowsWithMask(l0, differenceTransposed)
-  private lazy val diagR: RowWithMask = diagonal(r0.value) -> diagonal(currentMove)
-  private lazy val diagL: RowWithMask = diagonal(l0.value) -> diagonal(differenceTransposed)
+  private lazy val rowsR0: LazyList[RowWithMask] = rowsWithMask(r0, currentMove.value)
+  private lazy val rowsL0: LazyList[RowWithMask] = rowsWithMask(l0, differenceTransposed.value)
+  private lazy val diagR: RowWithMask = diagonal(r0.value) -> diagonal(currentMove.value)
+  private lazy val diagL: RowWithMask = diagonal(l0.value) -> diagonal(differenceTransposed.value)
   private lazy val diagonals: LazyList[RowWithMask] = diagR #:: diagL #:: LazyList.empty
 }
 
@@ -359,7 +375,7 @@ object TicTacToe {
    */
   def apply(): TicTacToe = apply(Board(0))
 
-  private def previous(value: Row, mask: Row): TicTacToe = TicTacToe(Board(value ^ mask))
+  private def previous(value: Int, mask: Int): TicTacToe = TicTacToe(Board(value ^ mask))
 
   /**
    * Apply method mostly for testing.
@@ -387,7 +403,7 @@ object TicTacToe {
    *          CONSIDER allowing newlines.
    * @return a TicTacToe.
    */
-  def parseString(s: String, maybeMask: Option[Row]): TicTacToe = {
+  def parseString(s: String, maybeMask: Option[Int]): TicTacToe = {
     val cells = s.toCharArray.toSeq map {
       case ' ' | '.' => 0
       case 'X' | 'x' => 1
@@ -407,7 +423,7 @@ object TicTacToe {
    * @return a Try of TicTacToe.
    */
   def parse(s: String, maybeMask: Option[Int] = None): Try[TicTacToe] = {
-    val x = s.replaceAll("""\n""", "")
+    val x = s.replaceAll("""[\n\-]""", "")
     if (x.length == TicTacToe.size * TicTacToe.size) Success(parseString(x, maybeMask))
     else Failure(DecisionTreeException(s"TicTacToe: parse failure: $s"))
   }
@@ -421,20 +437,31 @@ object TicTacToe {
 /**
  * This class represents 9 x 2 bits, at the high end of the 32-bit word.
  *
- * @param value the bit value of this row.
+ * @param value the bit value of this board.
  */
 case class Board(value: Int) extends AnyVal {
   def row(i: Int): Row = TicTacToeOps.row(value, i)
 
+  def ^(b: Board): Board = Board(value ^ b.value)
+
+  def &(b: Board): Board = Board(value & b.value)
+
+  def |(b: Board): Board = Board(value | b.value)
+
   override def toString: String = render // value.toHexString
 
-  def render: String = TicTacToeOps.render(value)
+  def render: String = value.toHexString //TicTacToeOps.render(value)
 
-  def play(xOrO: Boolean, row: Row, col: Row): Board = Board(playBoard(value, xOrO, row, col))
+  def play(xOrO: Boolean, row: Int, col: Int): Board = Board(playBoard(value, xOrO, row, col))
 
   def transpose: Board = Board(transposeBoard(value))
 
   def rotate: Board = Board(rotateBoard(value))
 
   def exchange: Board = Board(exchangeBoard(value))
+
+  def corner: Boolean = (value & 0xCC0CC000) != 0
+
+  def center: Boolean = (value & 0xC00000) != 0
+
 }
