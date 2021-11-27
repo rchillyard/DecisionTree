@@ -219,7 +219,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "fork" in {
-//        TicTacToe.parse("..X.0XX00").get.fork shouldBe Some(true)
+//        TicTacToe.parse("..X.0XX00", Some(0x8000)).get.fork shouldBe Some(true)
         TicTacToe.parse("..0.X0.XX").get.fork shouldBe Some(true)
         TicTacToe.parse("..0.X0X.X").get.fork shouldBe Some(true)
         TicTacToe.parse("..0XX0..X").get.fork shouldBe None
@@ -241,7 +241,8 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "corner" in {
-        TicTacToe.parse("X........").get.corner shouldBe true
+        val value1 = TicTacToe.parse("X........").get
+        value1.corner shouldBe true
         TicTacToe.parse(".X.......").get.corner shouldBe false
         TicTacToe.parse("..X......").get.corner shouldBe true
         TicTacToe.parse("...X.....").get.corner shouldBe false

@@ -93,13 +93,13 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
     case None => List("")
     case Some(x) => x.history :+ render()
   }
-
-  /**
-   * toString method for debugging: give the current board as a Hex String.
-   *
-   * @return a String of hexadecimal characters of length 8.
-   */
-  override def toString: String = render() // s"$board"
+//
+//  /**
+//   * toString method for debugging: give the current board as a Hex String.
+//   *
+//   * @return a String of hexadecimal characters of length 8.
+//   */
+//  override def toString: String = render() // s"$board"
 
   /**
    * The list of open cells for this TicTacToe.
@@ -155,7 +155,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
   private lazy val heuristic: Double = win match {
     case Some(x)
       if x == player =>
-      s"given $maybePrior chosen $board with " !| 7
+      s"given $maybePrior chosen $board with " |! 7
     case _ =>
       val centerOpp = oppHasCenter
       val ourOppCorner = weHaveOppositeCorner
@@ -163,34 +163,34 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
       block match {
         case Some(y)
           if y == player =>
-          message !| 6
+          message |! 6
         case _ =>
           fork match {
             case Some(x) if x == player =>
-              message !| 5
+              message |! 5
             case _ => peneWin match {
               case Some(x)
                 if x == player =>
-                message !| 4
+                message |! 4
               case _
                 // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
                 // Nevertheless, we force the top-left corner.
                 if firstAndTopLeftCorner =>
-                message !| 4
+                message |! 4
               case _
                 if center =>
-                message !| 3
+                message |! 3
               case _
                 if corner && centerOpp && ourOppCorner =>
-                message !| 3
+                message |! 3
               case _
                 if oppositeCorner(true) =>
-                message !| 2
+                message |! 2
               case _
                 if corner =>
-                message !| 1
+                message |! 1
               case _ =>
-                s"given $maybePrior defaulted to $board with " !| 0
+                s"given $maybePrior defaulted to $board with " |! 0
             }
           }
       }
@@ -238,7 +238,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private def isWin(rs: LazyList[RowWithMask]): Cell = isMatch(isLine)(rs)
 
-  private def isPendingWin(rs: LazyList[RowWithMask]): Cell = s"isPendingWin $rs: " !! isMatch(isLinePending)(rs)
+  private def isPendingWin(rs: LazyList[RowWithMask]): Cell = s"isPendingWin $rs: " |! isMatch(isLinePending)(rs)
 
   private def isBlock(rs: LazyList[RowWithMask]): Cell = isMatch(isBlocking)(rs)
 
@@ -375,10 +375,10 @@ object TicTacToe {
    */
   def apply(): TicTacToe = apply(Board(0))
 
-  private def previous(value: Int, mask: Int): TicTacToe = TicTacToe(Board(value ^ mask))
-
   /**
    * Apply method mostly for testing.
+   *
+   * TEST not currently used.
    *
    * @param board the current Board.
    * @param mask  a mask which defines the bits to be eliminated from board to yield the previous Board.
@@ -389,11 +389,11 @@ object TicTacToe {
   /**
    * Method to construct a TicTacToe with prior from a particular bit pattern and a mask.
    *
-   * @param x         the bit pattern.
-   * @param maybeMask an optional bit pattern to yield the prior state.
+   * @param x               the bit pattern.
+   * @param maybePriorBoard an optional bit pattern to yield the prior state.
    * @return a TicTacToe with all empty cells.
    */
-  def from(x: Int, maybeMask: Option[Int]): TicTacToe = TicTacToe(Board(x), maybeMask.map(previous(x, _)))
+  def from(x: Int, maybePriorBoard: Option[Int]): TicTacToe = TicTacToe(Board(x), maybePriorBoard.map(previous(x, _)))
 
   /**
    * Method to parse a pattern for a starting position.
@@ -410,7 +410,7 @@ object TicTacToe {
       case '0' | 'o' | 'O' => 2
       case x => throw DecisionTreeException(s"TicTacToe: illegal character: $x")
     }
-    if (cells.length >= 9) TicTacToe.from(TicTacToeOps.parse(cells.toArray), maybeMask)
+    if (cells.length >= 9) TicTacToe.from(TicTacToeOps.parseArray(cells.toArray), maybeMask)
     else throw DecisionTreeException("insufficient elements")
   }
 
@@ -431,6 +431,8 @@ object TicTacToe {
   // XXX the starting position (all nine empty cells).
   val start: TicTacToe = apply()
 
+  private def previous(value: Int, mask: Int): TicTacToe = TicTacToe(Board(value ^ mask))
+
   implicit val loggableTicTacToe: Loggable[TicTacToe] = (t: TicTacToe) => t.render()
 }
 
@@ -438,6 +440,7 @@ object TicTacToe {
  * This class represents 9 x 2 bits, at the high end of the 32-bit word.
  *
  * @param value the bit value of this board.
+ *              NOTE: that the low 14 bits of this value should always be zero.
  */
 case class Board(value: Int) extends AnyVal {
   def row(i: Int): Row = TicTacToeOps.row(value, i)

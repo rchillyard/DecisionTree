@@ -9,7 +9,7 @@ public class TicTacToeOps {
      * @param a an array of 9 ints.
      * @return the encoding of the board.
      */
-    public static int parse(int[] a) {
+    public static int parseArray(int[] a) {
         int result = 0;
         for (int i = 0; i < 9; i++) result = result << 2 | a[i];
         return result << 14;
@@ -91,7 +91,7 @@ public class TicTacToeOps {
 
     /**
      * Method to transpose a board.
-     * This operation is a hFlip followed by a rotate.
+     * This operation is a hFlip followed by invocation of rotateBoard.
      * We use this method when we need a column.
      *
      * @param x the bits of a Board.
