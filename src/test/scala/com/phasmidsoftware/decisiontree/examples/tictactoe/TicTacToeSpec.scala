@@ -203,6 +203,9 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         TicTacToe.parse("X  X  X  ").get.win shouldBe Some(true)
         TicTacToe.parse(" X 0X  X ").get.win shouldBe Some(true)
         TicTacToe.parse("0 X  X  X").get.win shouldBe Some(true)
+        TicTacToe.parse("X0.\n.0.\nX0X").get.win shouldBe Some(false)
+        TicTacToe.parse("X0.\n...\nX0.").get.win shouldBe None
+        TicTacToe.parse("...\n.0.\nX0X").get.win shouldBe None
     }
 
     it should "win diag" in {
@@ -219,10 +222,10 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "fork" in {
-//        TicTacToe.parse("..X.0XX00", Some(0x8000)).get.fork shouldBe Some(true)
-        TicTacToe.parse("..0.X0.XX").get.fork shouldBe Some(true)
-        TicTacToe.parse("..0.X0X.X").get.fork shouldBe Some(true)
-        TicTacToe.parse("..0XX0..X").get.fork shouldBe None
+        TicTacToe.parse("..X.0XX00", Some(0x8000)).get.fork shouldBe Some(false)
+        TicTacToe.parse("..0.X0.XX", Some(0x4000)).get.fork shouldBe Some(true)
+        TicTacToe.parse("..0.X0X.X", Some(0x4000)).get.fork shouldBe Some(true)
+        TicTacToe.parse("..0XX0..X", Some(0x4000)).get.fork shouldBe None
     }
 
     it should "block" in {
@@ -304,6 +307,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         z.heuristic(TicTacToe(TicTacToe.parse("         ").get.play(xOrO = true)(1, 1))) shouldBe 3 // X center
         z.heuristic(TicTacToe(TicTacToe.parse("   X X   ").get.play(xOrO = false)(1, 1))) shouldBe 3 // 0 center
         z.heuristic(TicTacToe(TicTacToe.parse(" XX      ").get.play(xOrO = true)(0, 0))) shouldBe 7 // X win
+        z.heuristic(TicTacToe.parse("X0.\n.0.\nX0X").get) shouldBe 7 // 0 win
         z.heuristic(TicTacToe(TicTacToe.parse("0 0      ").get.play(xOrO = true)(0, 1))) shouldBe 6 // X block
         z.heuristic(TicTacToe(TicTacToe.parse("0     X X").get.play(xOrO = false)(2, 1))) shouldBe 6 // 0 block
         z.heuristic(TicTacToe(TicTacToe.parse("....0..XX").get.play(xOrO = false)(2, 0))) shouldBe 6 // 0 block
@@ -327,7 +331,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse("....X....").get)
         val (_, t) = PriorityQueue.maxPQ(ss).del
         t shouldBe TicTacToe.parse("..0.X....").get
-        bTs.heuristic(t) shouldBe 3
+        bTs.heuristic(t) shouldBe 1
     }
 
     it should "get best X play from ..0.X...." in {

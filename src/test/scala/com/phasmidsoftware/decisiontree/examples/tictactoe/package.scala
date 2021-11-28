@@ -2,6 +2,11 @@ package com.phasmidsoftware.decisiontree.examples
 
 package object tictactoe {
 
+    /**
+     * If there is a "cell" (a matching square in the 3x3 grid), then:
+     * Some(true) for player X, and Some(false) for player 0.
+     * else None (no match).
+     */
     type Cell = Option[Boolean]
 
     /**

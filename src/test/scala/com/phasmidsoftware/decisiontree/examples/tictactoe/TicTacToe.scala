@@ -35,6 +35,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * The line may be horizontal (a row), vertical (a column) or diagonal.
    *
    * @return Some(b) if there is a line of similar marks in this TicTacToe otherwise None.
+   *         The Boolean b is true for player X, and false for player 0.
    */
   lazy val win: Cell = isWin(rowsR0) orElse isWin(rowsL0) orElse isWin(diagonals)
 
@@ -52,6 +53,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * The lines may be horizontal (a row), vertical (a column) or diagonal and missing one element.
    *
    * @return true if there is a line of two similar marks with a space between in this TicTacToe.
+   *         The Boolean b is true for player X, and false for player 0.
    */
   lazy val fork: Cell = hasTwo(for (r <- List(rowsR0, rowsL0, diagonals)) yield isPendingWin(r))(_.isDefined) match {
     case Some(x -> _) => x
@@ -63,6 +65,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * The line may be horizontal (a row), vertical (a column) or diagonal and missing one element.
    *
    * @return true if there is a line of two similar marks with a space between in this TicTacToe.
+   *         The Boolean b is true for player X, and false for player 0.
    */
   lazy val peneWin: Cell = hasOne(for (r <- List(rowsR0, rowsL0, diagonals)) yield isPendingWin(r))(_.isDefined).flatten
 
@@ -72,7 +75,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * @param xOrO true if X is to play, false otherwise.
    * @param row  the row at which the mark should be made.
    * @param col  the column at which the mark should be made.
-   * @return a new Board with the appropriate Cell marked.
+   * @return a new Board with the appropriate cell (i.e. square) marked.
    */
   def play(xOrO: Boolean)(row: Int, col: Int): Prototype = board.play(xOrO, row, col) -> this
 
@@ -146,7 +149,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    *
    * @return Some(false) if it's a draw, else None.
    */
-  def draw: Cell = if (open.isEmpty) Some(false) else None
+  def draw: Option[Boolean] = if (open.isEmpty) Some(false) else None
 
   private val flog = Flog[TicTacToe]
 
@@ -169,8 +172,10 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
             case Some(x) if x == player =>
               message |! 5
             case _ => peneWin match {
-              case Some(x)
-                if x == player =>
+              // XXX this is a good strategic position, even better than having one almost win.
+              case None if corner && centerOpp && ourOppCorner =>
+                message |! 4
+              case Some(x) if x == player =>
                 message |! 4
               case _
                 // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
@@ -179,9 +184,6 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
                 message |! 4
               case _
                 if center =>
-                message |! 3
-              case _
-                if corner && centerOpp && ourOppCorner =>
                 message |! 3
               case _
                 if oppositeCorner(true) =>
@@ -226,7 +228,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   def oppHasCenter: Boolean = maybePrior exists (_.center)
 
-  def weHaveOppositeCorner: Boolean = oppositeCorner(false) //maybePrior flatMap (_.maybePrior) exists (_.oppositeCorner)
+  def weHaveOppositeCorner: Boolean = maybePrior flatMap (_.maybePrior) exists (_.oppositeCorner(!player))
 
   private lazy val firstAndTopLeftCorner = board.value == 0x40000000
 
@@ -238,7 +240,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private def isWin(rs: LazyList[RowWithMask]): Cell = isMatch(isLine)(rs)
 
-  private def isPendingWin(rs: LazyList[RowWithMask]): Cell = s"isPendingWin $rs: " |! isMatch(isLinePending)(rs)
+  private def isPendingWin(rs: LazyList[RowWithMask]): Cell = isMatch(isLinePending)(rs)
 
   private def isBlock(rs: LazyList[RowWithMask]): Cell = isMatch(isBlocking)(rs)
 
@@ -328,12 +330,12 @@ object TicTacToe {
      * Have we reached a result? And, if so, who won?
      *
      * @param s a (current) state.
-     * @return a Cell: if None then this state is not a goal state.
+     * @return a Option[Boolean]: if None then this state is not a goal state.
      *         If Some(b) then:
      *         if b is true, we got a definite result and the winner is determined by examining s in more detail.
      *         If b is false, we got a partial result and we should continue to seek a more definite result.
      */
-    def isGoal(s: TicTacToe): Cell = s.win orElse s.draw
+    def isGoal(s: TicTacToe): Option[Boolean] = s.win map (_ => true) orElse s.draw
 
     /**
      * Return all of the possible transitions from the given state.
@@ -433,7 +435,9 @@ object TicTacToe {
 
   private def previous(value: Int, mask: Int): TicTacToe = TicTacToe(Board(value ^ mask))
 
-  implicit val loggableTicTacToe: Loggable[TicTacToe] = (t: TicTacToe) => t.render()
+  implicit object loggableTicTacToe extends Loggable[TicTacToe] {
+    def toLog(t: TicTacToe): String = t.render()
+  }
 }
 
 /**

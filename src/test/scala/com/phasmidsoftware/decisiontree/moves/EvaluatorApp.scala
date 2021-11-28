@@ -9,6 +9,4 @@ object EvaluatorApp extends App {
   val start: TicTacToe = TicTacToe()
   val so: Option[TicTacToe] = eval.evaluate(start)
   println(so.get.history)
-    println(so)
-  println(so map (implicitly[State[Board, TicTacToe]].isGoal(_)))
 }

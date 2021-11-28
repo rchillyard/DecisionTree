@@ -1,8 +1,7 @@
 package com.phasmidsoftware.decisiontree.moves
 
+import com.phasmidsoftware.flog.{Flog, Loggable}
 import com.phasmidsoftware.util.PriorityQueue
-
-import scala.annotation.tailrec
 
 /**
  * Trait to evaluate a state S according to some criterion.
@@ -63,32 +62,40 @@ abstract class Evaluator_State[P, S](implicit pSs: State[P, S]) extends Evaluato
  * @tparam P the type of the proto-state, i.e. a parameter needed to construct a new S.
  * @tparam S the underlying type of the state to be evaluated.
  */
-class Evaluator_PQ[P, S](implicit pSs: State[P, S]) extends Evaluator_State[P, S] {
+// TODO remove Loggable
+class Evaluator_PQ[P, S: Loggable](implicit pSs: State[P, S]) extends Evaluator_State[P, S] {
 
-  /**
-   * Evaluate a game, starting with state based on s.
-   *
-   * @param s the starting state.
-   * @return an Option[S]: if Some(s) then s is a goal state.
-   *         if None then no goal was achieved.
-   */
-  def evaluate(s: S): Option[S] = {
-    def updatePQ(pq: PriorityQueue[S], s: S) = pq.insertElements(states(s))
+    // TODO remove logging stuff
+    private val flog = Flog[Evaluator_PQ[P, S]]
 
-    @tailrec
-    def inner(best: Option[S], q1: PriorityQueue[S], q2: PriorityQueue[S]): Option[S] =
-      if (q1.isEmpty)
-        best
-      else {
-        val (q, s) = q1.del
-        isGoal(s) match {
-          case Some(true) if pSs.isWin(s) =>
-            Some(s)
-          case Some(false) =>
-            inner(Some(s), updatePQ(q2, s), q)
-          case _ =>
-            inner(best, updatePQ(q2, s), q)
-        }
+    import flog._
+
+    /**
+     * Evaluate a game, starting with state based on s.
+     *
+     * @param s the starting state.
+     * @return an Option[S]: if Some(s) then s is a goal state.
+     *         if None then no goal was achieved.
+     */
+    def evaluate(s: S): Option[S] = {
+        def updatePQ(pq: PriorityQueue[S], s: S) = pq.insertElements(states(s))
+
+        // TODO restore tailrec
+        //    @tailrec
+        def inner(best: Option[S], q1: PriorityQueue[S], q2: PriorityQueue[S]): Option[S] =
+            if (q1.isEmpty)
+                "inner (empty PQ)" !! best
+            else {
+                val (q, s) = q1.del
+                isGoal(s) match {
+                    case Some(true) if pSs.isWin(s) =>
+                        "inner isGoal: Some(true) returning" !! Some(s)
+                    case Some(false) =>
+                        // CONSIDER how do we know that Some(s) is "better" than best?
+                        "inner isGoal: Some(false) returning recursive" !! inner(Some(s), updatePQ(q2, s), q)
+                    case _ =>
+                        "inner isGoal: None recursing" !! inner(best, updatePQ(q2, s), q)
+                }
       }
 
     val result = inner(None, PriorityQueue.maxPQ(s), PriorityQueue.maxPQ)
