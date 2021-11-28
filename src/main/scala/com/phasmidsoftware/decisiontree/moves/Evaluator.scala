@@ -63,18 +63,12 @@ abstract class Evaluator_State[P, S](implicit pSs: State[P, S]) extends Evaluato
  * @tparam P the type of the proto-state, i.e. a parameter needed to construct a new S.
  * @tparam S the underlying type of the state to be evaluated.
  */
-// TODO remove Loggable
-class Evaluator_PQ[P, S: Loggable](implicit pSs: State[P, S]) extends Evaluator_State[P, S] {
-
-    // TODO remove logging stuff
-    private val flog = Flog[Evaluator_PQ[P, S]]
-
-    import flog._
+class Evaluator_PQ[P, S](implicit pSs: State[P, S]) extends Evaluator_State[P, S] {
 
     /**
-     * Evaluate a game, starting with state based on s.
+     * Evaluate a two-person game, starting with state based on s.
      *
-     * CONSIDER why are there two priority queues?
+     * NOTE: there are two priority queues because each opponent has their own strategy whose moves are stored in their own PQ.
      *
      * @param s the starting state.
      * @return an Option[S]: if Some(s) then s is a goal state.
@@ -84,20 +78,21 @@ class Evaluator_PQ[P, S: Loggable](implicit pSs: State[P, S]) extends Evaluator_
         def updatePQ(pq: PriorityQueue[S], s: S) = pq.insertElements(states(s))
 
         @tailrec
-        def inner(best: Option[S], sq: PriorityQueue[S]): Option[S] = sq.delOption match {
+        def inner(qp: PriorityQueue[S], qo: PriorityQueue[S]): Option[S] = qp.delOption match {
             case Some((q, s)) =>
-                val x = isGoal(s)
-                x match {
+//                System.err.println(s"State: ${pSs.render(s)}")
+                isGoal(s) match {
                     case Some(true) if pSs.isWin(s) =>
-                        "inner isGoal: Some(true) returning" !! Some(s)
+                        Some(s)
                     case Some(false) =>
                         None
                     case _ =>
-                        inner(best, updatePQ(q, s))
+                        inner(updatePQ(qo, s), q)
                 }
-            case None => best
+            case None =>
+                None
         }
 
-        inner(None, PriorityQueue.maxPQ(s))
+        inner(PriorityQueue.maxPQ(s), PriorityQueue.maxPQ)
     }
 }

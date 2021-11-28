@@ -6,13 +6,16 @@ import com.phasmidsoftware.util.PriorityQueue
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 
+/**
+ * NOTE: this Spec file depends on TicTacToe.
+ */
 class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
 
-  behavior of "Evaluator"
+  behavior of "Evaluator on TicTacToe"
 
   private val bTs: State[Board, TicTacToe] = implicitly[State[Board, TicTacToe]]
 
-  // TODO reinstate this test: it should end in a draw
+  // FIXME Issue_8 reinstate this test: it should end in a draw
   ignore should "evaluate TicTacToe" in {
     implicit val z: Loggable[TicTacToe] = (t: TicTacToe) => "\n" + t.render()
     val eval: Evaluator[TicTacToe] = new Evaluator_PQ[Board, TicTacToe]

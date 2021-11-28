@@ -8,5 +8,6 @@ object EvaluatorApp extends App {
   val eval = new Evaluator_PQ[Board, TicTacToe]
   val start: TicTacToe = TicTacToe()
   val so: Option[TicTacToe] = eval.evaluate(start)
+  // NOTE: we should always end with a draw, or a win by X. Never a win by 0.
   println(so.get.history)
 }

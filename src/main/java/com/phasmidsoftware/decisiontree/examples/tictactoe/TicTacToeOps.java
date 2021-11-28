@@ -71,9 +71,19 @@ public class TicTacToeOps {
                 sb.append(y == 1 ? 'X' : y == 2 ? '0' : '.');
                 x = x << 2;
             }
-            sb.append('\n');
+            sb.append('-');
         }
         return sb.toString();
+    }
+
+    /**
+     * Method to render a Board as three lines of X, 0, and . separated by newlines.
+     *
+     * @param z a Board.
+     * @return a String, which ends in a newline.
+     */
+    public static String renderWithNewlines(final int z) {
+        return render(z).replaceAll("-", "\n");
     }
 
     /**
@@ -195,6 +205,7 @@ public class TicTacToeOps {
 //            case 0x22, 0x28, 0x0A -> 2; // 0.0 00. .00
 //            default -> 0;
 //        };
+        //noinspection EnhancedSwitchMigration
         switch (x) {
             case 0x11:
             case 0x14:

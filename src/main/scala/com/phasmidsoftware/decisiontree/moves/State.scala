@@ -85,6 +85,14 @@ trait State[P, S] extends Ordering[S] {
    * @return <0 if s1 < s2, >0 if s1 > s2, else 0.
    */
   def compare(s1: S, s2: S): Int = heuristic(s1).compare(heuristic(s2))
+
+  /**
+   * Method to render a State as a String.
+   *
+   * @param s the State to render.
+   * @return a String representation of s.
+   */
+  def render(s: S): String
 }
 
 /**

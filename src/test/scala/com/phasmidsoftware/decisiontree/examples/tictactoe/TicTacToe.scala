@@ -83,11 +83,11 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * Method to create a string of Xs and 0s corresponding to this TicTacToe position.
    * Also includes the heuristic for the position.
    *
-   * CONSIDER adding a parameter to allow dropping the newlines and/or the heuristic.
+   * CONSIDER adding a parameter to allow dropping the heuristic.
    *
    * @return a String which is a rendition of the current state.
    */
-  def render(): String = s"\n${TicTacToeOps.render(board.value)} ($heuristic)"
+  def render(newlines: Boolean = false): String = if (newlines) s"\n${TicTacToeOps.renderWithNewlines(board.value)} ($heuristic)" else s"${TicTacToeOps.render(board.value)} ($heuristic)"
 
   /**
    * The history of a TicTacToe position, as a String.
@@ -96,13 +96,13 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
     case None => List("")
     case Some(x) => x.history :+ render()
   }
-//
+
 //  /**
 //   * toString method for debugging: give the current board as a Hex String.
 //   *
 //   * @return a String of hexadecimal characters of length 8.
 //   */
-//  override def toString: String = render() // s"$board"
+//  override def toString: String = render()
 
   /**
    * The list of open cells for this TicTacToe.
@@ -350,6 +350,8 @@ object TicTacToe {
       val f: TicTacToe => (Int, Int) => Prototype = t => if (s.player) t.play0 else t.playX
       for (z <- zs) yield Move[Board, TicTacToe](x => f(x)(z._1, z._2)._1, z.toString())
     }
+
+    def render(s: TicTacToe): String = s.render()
   }
 
   implicit object TicTacToeState$ extends TicTacToeState$

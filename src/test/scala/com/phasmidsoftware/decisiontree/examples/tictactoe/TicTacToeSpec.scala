@@ -19,13 +19,13 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         TicTacToeOps.open(0x40400000) shouldBe Array(1, 2, 3, 5, 6, 7, 8)
     }
     it should "render" in {
-        render(0x40000000) shouldBe "X..\n...\n...\n"
+        renderWithNewlines(0x40000000) shouldBe "X..\n...\n...\n"
     }
     it should "play" in {
         val board1 = playBoard(0, true, 0, 0)
         board1 shouldBe 0x40000000
         val board2 = playBoard(board1, false, 2, 0)
-        render(board2) shouldBe "X..\n...\n0..\n"
+        renderWithNewlines(board2) shouldBe "X..\n...\n0..\n"
         board2 shouldBe 0x40080000
     }
     // CONSIDER skipping the toHexString part
@@ -151,7 +151,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val bTs = implicitly[State[Board, TicTacToe]]
         val t1 = bTs.construct(b1)
         t1.open.size shouldBe TicTacToe.size * TicTacToe.size - 1
-        t1.render() shouldBe "\nX..\n...\n...\n (4.0)"
+        t1.render() shouldBe "X..-...-...- (4.0)"
     }
 
     it should "play false, 1, 0" in {
@@ -160,7 +160,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val bTs = implicitly[State[Board, TicTacToe]]
         val t1 = bTs.construct(b1)
         t1.open.size shouldBe TicTacToe.size * TicTacToe.size - 1
-        t1.render() shouldBe "\n...\n0..\n...\n (0.0)"
+        t1.render(true) shouldBe "\n...\n0..\n...\n (0.0)"
     }
 
     it should "playX 0, 0 and play0 1, 0" in {
@@ -171,7 +171,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val b2 = t1.play0(1, 0)
         val t2 = bTs.construct(b2)
         t2.open.size shouldBe TicTacToe.size * TicTacToe.size - 2
-        t2.render() shouldBe "\nX..\n0..\n...\n (0.0)"
+        t2.render() shouldBe "X..-0..-...- (0.0)"
     }
 
     it should "parse" in {

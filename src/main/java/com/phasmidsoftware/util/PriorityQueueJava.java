@@ -91,6 +91,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         PriorityQueueJava<E> result = (size >= this.heap.length) ? grow(heap.length * 2) : new PriorityQueueJava<>(this);
         result.doInsert(e);
 //        System.out.println("insert: result: " + result);
+//        if (result.heap[0] == e) System.out.println("insert: new max element: " + e);
         return result;
     }
 
