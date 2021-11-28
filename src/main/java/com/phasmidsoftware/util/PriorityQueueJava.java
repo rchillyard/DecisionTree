@@ -91,6 +91,7 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
         PriorityQueueJava<E> result = (size >= this.heap.length) ? grow(heap.length * 2) : new PriorityQueueJava<>(this);
         result.doInsert(e);
 //        System.out.println("insert: result: " + result);
+//        if (result.heap[0] == e) System.out.println("insert: new max element: " + e);
         return result;
     }
 
@@ -263,11 +264,16 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
 
     /**
      * Returns an iterator over the elements in this queue, in their increasing order.
+     * <p>
+     * Important NOTE: this PriorityQueue will be empty after the iterator has been traversed.
+     * This is because, internally, a binary heap is not in any very particular order--
+     * the sole invariant is "heap order."
+     * Therefore, the only way to get the second smallest element is to delete the first smallest element.
      *
      * @return an iterator over the elements.
      */
     public Iterator<E> iterator() {
-        return new PriorityQueueIterator<>(new PriorityQueueJava<>(this));
+        return new PriorityQueueIterator<>(this);
     }
 
     /**
@@ -288,11 +294,39 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     }
 
     /**
+     * Equals method: checks the size and, if not empty, the first element.
+     *
+     * @param o the other Object.
+     * @return true if this and o are equivalent.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PriorityQueueJava)) return false;
+        PriorityQueueJava<?> that = (PriorityQueueJava<?>) o;
+        return size == that.size && (size == 0 || heap[0] == that.heap[0]);
+    }
+
+    /**
+     * hashCode method: based on the size and, if not empty, the first element.
+     *
+     * @return the hash code.
+     */
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(size);
+        if (size > 0)
+            result = 31 * result + heap[0].hashCode();
+        return result;
+    }
+
+    /**
      * Creates a {@code PriorityQueueJava} with the default initial
      * capacity (11) that orders its elements according to their
      * {@linkplain Comparable natural ordering}.
      *
      * @param heap       binary heap.
+     *                   NOTE: you should clone the heap first if appropriate.
      * @param size       the number of elements in the binary heap.
      * @param comparator the comparator: if null, then E will be cast to Comparable.
      */
@@ -345,6 +379,8 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      * Creates a {@code PriorityQueueJava} with the specified initial capacity
      * that orders its elements according to the specified comparator.
      *
+     * @param e          an element to place in the resulting priority queue.
+     * @param comparator the comparator to use.
      * @throws IllegalArgumentException if {@code initialCapacity} is
      *                                  less than 1
      */
@@ -375,9 +411,8 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
     }
 
     private PriorityQueueJava(PriorityQueueJava<E> other) {
-        this(other.heap, other.comparator, other.size);
+        this(other.heap.clone(), other.comparator, other.size);
     }
-
 
     /**
      * Creates a {@code PriorityQueue} containing the elements in the
@@ -395,17 +430,41 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
      * @throws NullPointerException if the specified collection or any
      *                              of its elements are null
      */
-    @SuppressWarnings("unchecked")
     public PriorityQueueJava(Collection<? extends E> c) {
+        this(c, getComparator(c));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E> Comparator<? super E> getComparator(Collection<? extends E> c) {
+        Comparator<? super E> comparator = null;
         if (c instanceof SortedSet<?>) {
             SortedSet<? extends E> ss = (SortedSet<? extends E>) c;
-            this.comparator = (Comparator<? super E>) ss.comparator();
-            this.heap = initElementsFromCollection(ss);
-        } else {
-            this.comparator = null;
-            this.heap = initElementsFromCollection(c);
-            heapify();
+            comparator = (Comparator<? super E>) ss.comparator();
         }
+        return comparator;
+    }
+
+    /**
+     * Creates a {@code PriorityQueue} containing the elements in the
+     * specified collection.  If the specified collection is an instance of
+     * a {@link SortedSet} or is another {@code PriorityQueue}, this
+     * priority queue will be ordered according to the same ordering.
+     * Otherwise, this priority queue will be ordered according to the
+     * {@linkplain Comparable natural ordering} of its elements.
+     *
+     * @param c          the collection whose elements are to be placed
+     *                   into this priority queue
+     * @param comparator the comparator to use.
+     * @throws ClassCastException   if elements of the specified collection
+     *                              cannot be compared to one another according to the priority
+     *                              queue's ordering
+     * @throws NullPointerException if the specified collection or any
+     *                              of its elements are null
+     */
+    public PriorityQueueJava(Collection<? extends E> c, Comparator<? super E> comparator) {
+        this.comparator = comparator;
+        this.heap = initElementsFromCollection(c);
+        heapify();
     }
 
     public static class DeleteResult<E> {
@@ -676,13 +735,12 @@ public class PriorityQueueJava<E> extends AbstractQueue<E>
 
     private static final class PriorityQueueIterator<X> implements Iterator<X> {
         public PriorityQueueIterator(PriorityQueueJava<X> pq) {
-            this.pq = pq;
+            this.pq = new PriorityQueueJava<>(pq.heap.clone(), pq.comparator, pq.size);
         }
 
         private final PriorityQueueJava<X> pq;
 
         private final int cursor = 0;
-
 
         public boolean hasNext() {
             return cursor < pq.size;

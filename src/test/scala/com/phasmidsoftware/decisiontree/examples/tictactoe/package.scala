@@ -2,6 +2,11 @@ package com.phasmidsoftware.decisiontree.examples
 
 package object tictactoe {
 
+    /**
+     * If there is a "cell" (a matching square in the 3x3 grid), then:
+     * Some(true) for player X, and Some(false) for player 0.
+     * else None (no match).
+     */
     type Cell = Option[Boolean]
 
     /**
@@ -11,6 +16,12 @@ package object tictactoe {
      * CONSIDER using Row(x: Int) extends AnyVal
      */
     type Row = Int
+//
+//    case class Row(x: Int) extends AnyVal {
+//        def &(y: Int): Row = Row(x & y)
+//
+//        override def toString: String = x.toHexString
+//    }
 
     /**
      * Representation of a Row with a bit mask representing the difference between two states.
