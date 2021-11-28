@@ -231,6 +231,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     it should "block" in {
         TicTacToe(TicTacToe.parse("0 0     0").get.play(xOrO = true)(0, 1)).block shouldBe Some(true)
         TicTacToe(TicTacToe.parse("X X     0").get.play(xOrO = false)(0, 1)).block shouldBe Some(false)
+        TicTacToe(TicTacToe.parse("X...0..0X").get.play(xOrO = true)(0, 1)).block shouldBe Some(true)
     }
 
     it should "heuristic 1" in {

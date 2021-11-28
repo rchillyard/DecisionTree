@@ -12,17 +12,17 @@ case class PriorityQueue[X: Ordering](pq: PriorityQueueJava[X]) extends Iterable
 
     def insert(x: X): PriorityQueue[X] = PriorityQueue(pq.insert(x))
 
-    def delOption: Option[(PriorityQueue[X], X)] = {
+    lazy val delOption: Option[(PriorityQueue[X], X)] = {
         val z = pq.del()
         for (v <- Option(z.getValue)) yield (PriorityQueue(z.getPq), v)
     }
 
-    def del: (PriorityQueue[X], X) = {
+    lazy val del: (PriorityQueue[X], X) = {
         val z = pq.del()
         (PriorityQueue(z.getPq), z.getValue)
     }
 
-    override def size: Int = pq.size()
+    override lazy val size: Int = pq.size()
 
     /**
      * Important NOTE: this PriorityQueue will be empty after the iterator has been traversed.
@@ -32,7 +32,7 @@ case class PriorityQueue[X: Ordering](pq: PriorityQueueJava[X]) extends Iterable
      *
      * @return an Iterator.
      */
-    def iterator: Iterator[X] = for (x <- pq.iterator().asScala) yield x
+    lazy val iterator: Iterator[X] = for (x <- pq.iterator().asScala) yield x
 
     /**
      * Method to insert elements into this PriorityQueue.
