@@ -189,11 +189,24 @@ public class TicTacToeOps {
      * @return 0 if no line pending, 1 if X has two cells, 2 if 0 has two cells.
      */
     public static int rowLinePending(int x) {
-        return switch (x) {
-            case 0x11, 0x14, 0x05 -> 1; // X.X XX. .XX
-            case 0x22, 0x28, 0x0A -> 2; // 0.0 00. .00
-            default -> 0;
-        };
+        // CONSIDER restoring this once CircleCI is OK with it.
+//        return switch (x) {
+//            case 0x11, 0x14, 0x05 -> 1; // X.X XX. .XX
+//            case 0x22, 0x28, 0x0A -> 2; // 0.0 00. .00
+//            default -> 0;
+//        };
+        switch (x) {
+            case 0x11:
+            case 0x14:
+            case 0x05:
+                return 1;
+            case 0x22:
+            case 0x28:
+            case 0x0A:
+                return 2;
+            default:
+                return 0;
+        }
     }
 
     /**
