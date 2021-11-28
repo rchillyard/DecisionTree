@@ -15,7 +15,7 @@ class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
   // TODO reinstate this test: it should end in a draw
   ignore should "evaluate TicTacToe" in {
     implicit val z: Loggable[TicTacToe] = (t: TicTacToe) => "\n" + t.render()
-    val eval = new Evaluator_PQ[Board, TicTacToe]
+    val eval: Evaluator[TicTacToe] = new Evaluator_PQ[Board, TicTacToe]
     val start: TicTacToe = TicTacToe()
     val so: Option[TicTacToe] = eval.evaluate(start)
     so should matchPattern { case Some(_) => }

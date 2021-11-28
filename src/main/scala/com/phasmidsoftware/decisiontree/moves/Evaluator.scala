@@ -84,27 +84,20 @@ class Evaluator_PQ[P, S: Loggable](implicit pSs: State[P, S]) extends Evaluator_
         def updatePQ(pq: PriorityQueue[S], s: S) = pq.insertElements(states(s))
 
         @tailrec
-        def inner(best: Option[S], q1: PriorityQueue[S], q2: PriorityQueue[S]): Option[S] =
-        // CONSIDER using q1.delOption
-            if (q1.isEmpty)
-                "inner (empty PQ)" !! best
-            else {
-                val (q, s) = q1.del
+        def inner(best: Option[S], sq: PriorityQueue[S]): Option[S] = sq.delOption match {
+            case Some((q, s)) =>
                 val x = isGoal(s)
                 x match {
-                    case Some(true) if s"isWin $s" !! pSs.isWin(s) =>
+                    case Some(true) if pSs.isWin(s) =>
                         "inner isGoal: Some(true) returning" !! Some(s)
                     case Some(false) =>
                         None
-                    // CONSIDER how do we know that Some(s) is "better" than best?
-//                        inner("inner isGoal: Some(false) recursing" !! Some(s), updatePQ(q2, s), q)
                     case _ =>
-                        inner("inner isGoal: None recursing" !! best, updatePQ(q2, s), q)
+                        inner(best, updatePQ(q, s))
                 }
-            }
+            case None => best
+        }
 
-        // TODO Inline
-    val result = inner(None, PriorityQueue.maxPQ(s), PriorityQueue.maxPQ)
-    result
-  }
+        inner(None, PriorityQueue.maxPQ(s))
+    }
 }
