@@ -6,6 +6,7 @@ import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.flog.{Flog, Loggable}
 import com.phasmidsoftware.util.Aggregators.{hasOne, hasTwo}
 import com.phasmidsoftware.util.{DecisionTreeException, Shuffle}
+
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -233,6 +234,8 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
   private lazy val firstAndTopLeftCorner = board.value == 0x40000000
 
   private def row(board: Board)(i: Int): Row = board.row(i)
+
+  private def rowTupled(i: Int): Row = row(board)(i) // NOTE: used by unit tests
 
   private def rowsWithMask(board: Board, mask: Int) = LazyList.from(0).take(size).map(i => row(board)(i) -> TicTacToeOps.row(mask, i))
 

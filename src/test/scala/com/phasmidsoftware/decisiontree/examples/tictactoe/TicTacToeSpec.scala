@@ -7,6 +7,7 @@ import com.phasmidsoftware.util.PriorityQueue
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+
 import scala.util.{Failure, Success, Try}
 
 class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodTester {
@@ -131,9 +132,9 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     behavior of "TicTacToe"
-    ignore should "row" in {
+    it should "row" in {
         val ty: Try[TicTacToe] = TicTacToe.parse("X   X   X")
-        val rowMethod = PrivateMethod[Int](Symbol("row"))
+        val rowMethod: PrivateMethod[Row] = PrivateMethod[Row](Symbol("rowTupled"))
         val invokeRow: Int => TicTacToe => Int = x => t => t invokePrivate rowMethod(x)
         ty.map(invokeRow(0)) should matchPattern { case Success(16) => }
         ty.map(invokeRow(1)) should matchPattern { case Success(4) => }
