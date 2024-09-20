@@ -233,11 +233,9 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private lazy val firstAndTopLeftCorner = board.value == 0x40000000
 
-  private def row(board: Board)(i: Int): Row = board.row(i)
+  private def rowTupled(i: Int): Row = TicTacToe.row(board)(i) // NOTE: used by unit tests
 
-  private def rowTupled(i: Int): Row = row(board)(i) // NOTE: used by unit tests
-
-  private def rowsWithMask(board: Board, mask: Int) = LazyList.from(0).take(size).map(i => row(board)(i) -> TicTacToeOps.row(mask, i))
+  private def rowsWithMask(board: Board, mask: Int) = LazyList.from(0).take(size).map(i => TicTacToe.row(board)(i) -> TicTacToeOps.row(mask, i))
 
   private def isMatch(f: Matching)(rs: LazyList[RowWithMask]): Cell = rs.map(f).foldLeft[Cell](None)((result, cell) => result orElse cell)
 
@@ -439,6 +437,8 @@ object TicTacToe {
   val start: TicTacToe = apply()
 
   private def previous(value: Int, mask: Int): TicTacToe = TicTacToe(Board(value ^ mask))
+
+  private def row(board: Board)(i: Int): Row = board.row(i)
 
   implicit object loggableTicTacToe extends Loggable[TicTacToe] {
     def toLog(t: TicTacToe): String = t.render()
