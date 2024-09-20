@@ -1,6 +1,6 @@
 package com.phasmidsoftware.decisiontree.examples.tictactoe
 
-import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.{Prototype, size}
+import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToe.{Prototype, rowsWithMask, size}
 import com.phasmidsoftware.decisiontree.examples.tictactoe.TicTacToeOps._
 import com.phasmidsoftware.decisiontree.moves.{Move, State, Transition}
 import com.phasmidsoftware.flog.{Flog, Loggable}
@@ -235,8 +235,6 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private def rowTupled(i: Int): Row = TicTacToe.row(board)(i) // NOTE: used by unit tests
 
-  private def rowsWithMask(board: Board, mask: Int) = LazyList.from(0).take(size).map(i => TicTacToe.row(board)(i) -> TicTacToeOps.row(mask, i))
-
   private def isMatch(f: Matching)(rs: LazyList[RowWithMask]): Cell = rs.map(f).foldLeft[Cell](None)((result, cell) => result orElse cell)
 
   private def isWin(rs: LazyList[RowWithMask]): Cell = isMatch(isLine)(rs)
@@ -439,6 +437,8 @@ object TicTacToe {
   private def previous(value: Int, mask: Int): TicTacToe = TicTacToe(Board(value ^ mask))
 
   private def row(board: Board)(i: Int): Row = board.row(i)
+
+  private def rowsWithMask(board: Board, mask: Int) = LazyList.from(0).take(size).map(i => TicTacToe.row(board)(i) -> TicTacToeOps.row(mask, i))
 
   implicit object loggableTicTacToe extends Loggable[TicTacToe] {
     def toLog(t: TicTacToe): String = t.render()
