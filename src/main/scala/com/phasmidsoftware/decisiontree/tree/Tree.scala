@@ -3,6 +3,7 @@ package com.phasmidsoftware.decisiontree.tree
 import com.phasmidsoftware.decisiontree.tree.Tree.TreeOps
 import com.phasmidsoftware.decisiontree.tree.Visitor.QueueVisitor
 import com.phasmidsoftware.util.PriorityQueue
+
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.collection.mutable
@@ -292,10 +293,10 @@ object Tree {
   private final def bfsPQ[T, V](visitor: V, p: T => Boolean)(queue: PriorityQueue[Node[T]])(implicit tVv: Visitor[Node[T], V]): V =
     queue.delOption match {
       case None => visitor
-      case Some((q, tn)) =>
-        if (tn.filter(p))
-          bfsPQ(tVv.visit(visitor, tn), p)(tn.children.foldLeft(q)(_.insert(_)))
-        else bfsPQ(visitor, p)(q)
+      case Some((q, tn)) if tn.filter(p) =>
+        bfsPQ(tVv.visit(visitor, tn), p)(tn.children.foldLeft(q)(_.insert(_)))
+      case
+        Some((q, _)) => bfsPQ(visitor, p)(q)
     }
 
   private val always: Any => Boolean = _ => true

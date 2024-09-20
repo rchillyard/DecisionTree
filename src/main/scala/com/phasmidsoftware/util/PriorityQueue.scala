@@ -10,16 +10,35 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
  */
 case class PriorityQueue[X: Ordering](pq: PriorityQueueJava[X]) extends Iterable[X] {
 
+    /**
+     * Method to insert an element into this PriorityQueue.
+     *
+     * @param x the element to be inserted.
+     * @return a new PriorityQueue which contains <code>x</code> in additional to all elements of <code>this</code>.
+     */
     def insert(x: X): PriorityQueue[X] = PriorityQueue(pq.insert(x))
 
+    /**
+     * Method to delete the minimum element from this PriorityQueue.
+     *
+     * @return an optional tuple of a new PriorityQueue (without its minimum element) and the minimum element.
+     */
     lazy val delOption: Option[(PriorityQueue[X], X)] = {
-        val z = pq.del()
-        for (v <- Option(z.getValue)) yield (PriorityQueue(z.getPq), v)
+        val z: PriorityQueueJava.DeleteResult[X] = pq.del()
+        Option(z.getValue) match {
+            case Some(x) => Some(PriorityQueue(z.getPq), x)
+            case None => None
+        }
     }
 
-    lazy val del: (PriorityQueue[X], X) = {
-        val z = pq.del()
-        (PriorityQueue(z.getPq), z.getValue)
+    /**
+     * Method to delete the minimum element from this PriorityQueue.
+     *
+     * @return a tuple of a new PriorityQueue (without its minimum element) and the minimum element.
+     */
+    lazy val del: (PriorityQueue[X], X) = delOption match {
+        case Some((xp, x)) => (xp, x)
+        case None => throw new PriorityQueueException("Cannot del on an empty PriorityQueue")
     }
 
     override lazy val size: Int = pq.size()
@@ -53,7 +72,8 @@ case class PriorityQueue[X: Ordering](pq: PriorityQueueJava[X]) extends Iterable
 object PriorityQueue {
     def apply[X: Ordering]: PriorityQueue[X] = PriorityQueue(new PriorityQueueJava[X](implicitly[Ordering[X]]))
 
-    def apply[X: Ordering](x: X): PriorityQueue[X] = PriorityQueue(new PriorityQueueJava[X](x, implicitly[Ordering[X]]))
+    def apply[X: Ordering](x: X): PriorityQueue[X] =
+        PriorityQueue(new PriorityQueueJava[X](x, implicitly[Ordering[X]]))
 
     def apply[X: Ordering](xs: Seq[X]): PriorityQueue[X] = {
         import scala.jdk.CollectionConverters._
