@@ -78,7 +78,7 @@ class PriorityQueueSpec extends AnyFlatSpec with should.Matchers {
     }
 
     it should "maxPQ2" in {
-        PriorityQueue.maxPQ[Int](1).insert(2).head shouldBe 2
+        PriorityQueue.maxPQ[Int](2).insert(1).head shouldBe 2
     }
 
 }

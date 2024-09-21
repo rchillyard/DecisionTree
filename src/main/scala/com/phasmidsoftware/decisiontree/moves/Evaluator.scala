@@ -1,7 +1,7 @@
 package com.phasmidsoftware.decisiontree.moves
 
-import com.phasmidsoftware.flog.{Flog, Loggable}
 import com.phasmidsoftware.util.PriorityQueue
+
 import scala.annotation.tailrec
 
 /**

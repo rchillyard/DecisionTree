@@ -88,14 +88,17 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    *
    * @return a String which is a rendition of the current state.
    */
-  def render(newlines: Boolean = false): String = if (newlines) s"\n${TicTacToeOps.renderWithNewlines(board.value)} ($heuristic)" else s"${TicTacToeOps.render(board.value)} ($heuristic)"
+  def render(newlines: Boolean = false): String =
+    if (newlines) s"\n${TicTacToeOps.renderWithNewlines(board.value)} ($heuristic)" else s"${TicTacToeOps.render(board.value)} ($heuristic)"
 
   /**
    * The history of a TicTacToe position, as a String.
+   *
+   * NOTE: it seems that this is a general method, not specific to TicTacToe
    */
   lazy val history: List[String] = maybePrior match {
     case None => List("")
-    case Some(x) => x.history :+ render()
+    case Some(x) => x.history :+ render(true) // XXX true makes the history easier to read.
   }
 
 //  /**
@@ -157,46 +160,49 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
   import flog._
 
   private lazy val heuristic: Double = win match {
-    case Some(x)
-      if x == player =>
-      s"given $maybePrior chosen $board with " |! 7
-    case _ =>
-      val centerOpp = oppHasCenter
-      val ourOppCorner = weHaveOppositeCorner
-      val message = s"given $maybePrior chosen $board with "
-      block match {
-        case Some(y)
-          if y == player =>
-          message |! 6
-        case _ =>
-          fork match {
-            case Some(x) if x == player =>
-              message |! 5
-            case _ => peneWin match {
-              // XXX this is a good strategic position, even better than having one almost win.
-              case None if corner && centerOpp && ourOppCorner =>
-                message |! 4
-              case Some(x) if x == player =>
-                message |! 4
-              case _
-                // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
-                // Nevertheless, we force the top-left corner.
-                if firstAndTopLeftCorner =>
-                message |! 4
-              case _
-                if center =>
-                message |! 3
-              case _
-                if oppositeCorner(true) =>
-                message |! 2
-              case _
-                if corner =>
-                message |! 1
-              case _ =>
-                s"given $maybePrior defaulted to $board with " |! 0
-            }
-          }
-      }
+    case Some(x) if x == player =>
+      s"win: player=$player given $x prior=$maybePrior chosen $board with " !! 7
+    case None => assessBlock
+    case Some(_) => throw DecisionTreeException("logic error: invalid win")
+  }
+
+  private def assessBlock = {
+    val message = s"player=$player given prior=$maybePrior chosen $board with "
+    block match {
+      case Some(y) if y == player =>
+        message + " block" !! 6
+      case None => assessFork(oppHasCenter, weHaveOppositeCorner, message)
+      case Some(_) => throw DecisionTreeException("logic error: invalid block")
+    }
+  }
+
+  private def assessFork(centerOpp: Boolean, ourOppCorner: Boolean, message: String) = fork match {
+    case Some(x) if x == player =>
+      message + " fork" !! 5
+    case _ => peneWin match {
+      // XXX this is a good strategic position, even better than having one almost win.
+      case None if corner && centerOpp && ourOppCorner =>
+        message + " corner/centerOpp/ourOpp" !! 4
+      case Some(x) if x == player =>
+        message + " peneWin" !! 4
+      case _
+        // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
+        // Nevertheless, we force the top-left corner.
+        if firstAndTopLeftCorner =>
+        message + " firstAndTopLeftCorner" !! 4
+      case _
+        if center =>
+        message + " center" !! 3
+      case _
+        if oppositeCorner(true) =>
+        message + " opposite corner" !! 2
+      case _
+        if corner =>
+        message + " corner" !! 1
+      case _ =>
+        s"default player=$player given prior=$maybePrior defaulted to $board with " !! 0
+    }
+    case Some(_) => throw DecisionTreeException("Logic error: invalid fork")
   }
 
   private lazy val center = currentMove.center
