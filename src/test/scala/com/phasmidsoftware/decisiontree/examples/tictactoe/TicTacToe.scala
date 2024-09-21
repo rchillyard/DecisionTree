@@ -161,48 +161,47 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private lazy val heuristic: Double = win match {
     case Some(x) if x == player =>
-      s"win: player=$player given $x prior=$maybePrior chosen $board with " !! 7
+      s"win: player=$player given $x prior=$maybePrior chosen ${board.render} ($board) with " !! 7
     case None => assessBlock
-    case Some(_) => throw DecisionTreeException("logic error: invalid win")
+    case Some(_) => throw DecisionTreeException("logic error: opponent win")
   }
 
-  private def assessBlock = {
-    val message = s"player=$player given prior=$maybePrior chosen $board with "
-    block match {
-      case Some(y) if y == player =>
-        message + " block" !! 6
-      case None => assessFork(oppHasCenter, weHaveOppositeCorner, message)
-      case Some(_) => throw DecisionTreeException("logic error: invalid block")
-    }
+  private def assessBlock = block match {
+    case Some(y) if y == player =>
+      s"Block by player=$player given prior=$maybePrior chosen ${board.render} ($board) with " !! 6
+    case None => assessFork(oppHasCenter, weHaveOppositeCorner)
+    case Some(_) => throw DecisionTreeException("logic error: opponent block")
   }
 
-  private def assessFork(centerOpp: Boolean, ourOppCorner: Boolean, message: String) = fork match {
+  private def assessFork(centerOpp: Boolean, ourOppCorner: Boolean) = fork match {
     case Some(x) if x == player =>
-      message + " fork" !! 5
-    case _ => potentialWin match {
-      // XXX this is a good strategic position, even better than having one almost win.
-      case None if corner && centerOpp && ourOppCorner =>
-        message + " corner/centerOpp/ourOpp" !! 4
-      case Some(x) if x == player =>
-        message + " peneWin" !! 4
-      case _
-        // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
-        // Nevertheless, we force the top-left corner.
-        if firstAndTopLeftCorner =>
-        message + " firstAndTopLeftCorner" !! 4
-      case _
-        if center =>
-        message + " center" !! 3
-      case _
-        if oppositeCorner(true) =>
-        message + " opposite corner" !! 2
-      case _
-        if corner =>
-        message + " corner" !! 1
-      case _ =>
-        s"default player=$player given prior=$maybePrior defaulted to $board with " !! 0
-    }
-    case Some(_) => throw DecisionTreeException("Logic error: invalid fork")
+      s"fork by player=$player given prior=$maybePrior chosen ${board.render} ($board) with " !! 5
+    case _ => assessPotentialWin(centerOpp, ourOppCorner)
+    //    case Some(_) => throw DecisionTreeException("Logic error: opponent fork")
+  }
+
+  private def assessPotentialWin(centerOpp: Boolean, ourOppCorner: Boolean) = potentialWin match {
+    case Some(x) if x == player => s"potential win by player=$player given prior=$maybePrior chosen ${board.render} ($board) with " !! 4
+    case _ => assessTactics(centerOpp, ourOppCorner)
+    //    case Some(_) => throw DecisionTreeException("Logic error: opponent potential win")
+  }
+
+  private def assessTactics(centerOpp: Boolean, ourOppCorner: Boolean) = {
+    val message = s"tactical move by player=$player given prior=$maybePrior chosen ${board.render} ($board) with "
+    if (corner && centerOpp && ourOppCorner)
+      message + " corner/centerOpp/ourOpp" !! 4
+    // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
+    // Nevertheless, we force the top-left corner.
+    else if (firstAndTopLeftCorner)
+      message + " firstAndTopLeftCorner" !! 4
+    else if (center)
+      message + " center" !! 3
+    else if (oppositeCorner(true))
+      message + " opposite corner" !! 2
+    else if (corner)
+      message + " corner" !! 1
+    else
+      s"default player=$player given prior=$maybePrior defaulted to $board with " !! 0
   }
 
   private lazy val center = currentMove.center
@@ -466,9 +465,9 @@ case class Board(value: Int) extends AnyVal {
 
   def |(b: Board): Board = Board(value | b.value)
 
-  override def toString: String = render // value.toHexString
+  override def toString: String = value.toHexString
 
-  def render: String = value.toHexString //TicTacToeOps.render(value)
+  def render: String = TicTacToeOps.render(value)
 
   def play(xOrO: Boolean, row: Int, col: Int): Board = Board(playBoard(value, xOrO, row, col))
 

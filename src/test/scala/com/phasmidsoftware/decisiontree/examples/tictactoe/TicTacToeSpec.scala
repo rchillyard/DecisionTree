@@ -342,7 +342,7 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         val ss = bTs.getStates(TicTacToe.parse(".........").get)
         val (_, t) = PriorityQueue.maxPQ(ss).del
         t shouldBe TicTacToe.parse("X........").get
-        t.board.render shouldBe "40000000"
+        t.board.render shouldBe "X..-...-...-"
         bTs.heuristic(t) shouldBe 4
     }
 
