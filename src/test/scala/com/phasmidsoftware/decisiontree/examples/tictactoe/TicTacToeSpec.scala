@@ -224,11 +224,11 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
         TicTacToe.parse(" 0    XXX").get.win shouldBe Some(true)
     }
 
-    it should "peneWin" in {
-        TicTacToe.from(0x44000000, None).peneWin shouldBe Some(true)
-        TicTacToe.from(0x40040000, None).peneWin shouldBe Some(true)
-        TicTacToe.from(0x40400000, None).peneWin shouldBe Some(true)
-        TicTacToe.parse(".00     0").get.peneWin shouldBe Some(false)
+    it should "potentialWin" in {
+        TicTacToe.from(0x44000000, None).potentialWin shouldBe Some(true)
+        TicTacToe.from(0x40040000, None).potentialWin shouldBe Some(true)
+        TicTacToe.from(0x40400000, None).potentialWin shouldBe Some(true)
+        TicTacToe.parse(".00     0").get.potentialWin shouldBe Some(false)
     }
 
     it should "fork" in {

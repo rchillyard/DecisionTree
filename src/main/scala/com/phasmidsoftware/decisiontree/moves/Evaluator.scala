@@ -68,8 +68,6 @@ class Evaluator_PQ[P, S](implicit pSs: State[P, S]) extends Evaluator_State[P, S
     /**
      * Evaluate a two-person game, starting with state based on s.
      *
-     * NOTE: there are two priority queues because each opponent has their own strategy whose moves are stored in their own PQ.
-     *
      * @param s the starting state.
      * @return an Option[S]: if Some(s) then s is a goal state.
      *         if None then no goal was achieved.
@@ -78,21 +76,21 @@ class Evaluator_PQ[P, S](implicit pSs: State[P, S]) extends Evaluator_State[P, S
         def updatePQ(pq: PriorityQueue[S], s: S) = pq.insertElements(states(s))
 
         @tailrec
-        def inner(qp: PriorityQueue[S], qo: PriorityQueue[S]): Option[S] = qp.delOption match {
-            case Some((q, s)) =>
-//                System.err.println(s"State: ${pSs.render(s)}")
-                isGoal(s) match {
-                    case Some(true) if pSs.isWin(s) =>
-                        Some(s)
-                    case Some(false) =>
-                        None
-                    case _ =>
-                        inner(updatePQ(qo, s), q)
-                }
+        def inner(qp: PriorityQueue[S]): Option[S] = qp.delOption match {
+          case Some((q, s)) =>
+            System.err.println(s"State: ${pSs.render(s)}")
+            isGoal(s) match {
+              case Some(true) if pSs.isWin(s) =>
+                Some(s)
+              case Some(false) =>
+                None
+              case _ =>
+                inner(updatePQ(q, s))
+            }
             case None =>
                 None
         }
 
-        inner(PriorityQueue.maxPQ(s), PriorityQueue.maxPQ)
+      inner(PriorityQueue.maxPQ(s))
     }
 }

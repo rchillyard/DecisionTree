@@ -68,7 +68,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * @return true if there is a line of two similar marks with a space between in this TicTacToe.
    *         The Boolean b is true for player X, and false for player 0.
    */
-  lazy val peneWin: Cell = hasOne(for (r <- List(rowsR0, rowsL0, diagonals)) yield isPendingWin(r))(_.isDefined).flatten
+  lazy val potentialWin: Cell = hasOne(for (r <- List(rowsR0, rowsL0, diagonals)) yield isPendingWin(r))(_.isDefined).flatten
 
   /**
    * Method to create a new TicTacToe from this TicTacToe.
@@ -179,7 +179,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
   private def assessFork(centerOpp: Boolean, ourOppCorner: Boolean, message: String) = fork match {
     case Some(x) if x == player =>
       message + " fork" !! 5
-    case _ => peneWin match {
+    case _ => potentialWin match {
       // XXX this is a good strategic position, even better than having one almost win.
       case None if corner && centerOpp && ourOppCorner =>
         message + " corner/centerOpp/ourOpp" !! 4
