@@ -78,7 +78,7 @@ class Evaluator_PQ[P, S](implicit pSs: State[P, S]) extends Evaluator_State[P, S
         @tailrec
         def inner(qp: PriorityQueue[S]): Option[S] = qp.delOption match {
           case Some((q, s)) =>
-            System.err.println(s"State: ${pSs.render(s)}")
+            System.out.println(s"State: ${pSs.render(s)}")
             isGoal(s) match {
               case Some(true) if pSs.isWin(s) =>
                 Some(s)

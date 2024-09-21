@@ -159,49 +159,49 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   import flog._
 
-  private lazy val heuristic: Double = win match {
-    case Some(x) if x == player =>
-      s"win: player=$player given $x prior=$maybePrior chosen ${board.render} ($board) with " !! 7
+  private def messageString = s" player=$player given prior=$maybePrior choose ${board.render} ($board) for score of "
+
+  private lazy val heuristic: Double = if (board.isEmpty) 0
+  else win match {
+    case Some(x) if x == player => s"win:" + messageString !! 7
     case None => assessBlock
     case Some(_) => throw DecisionTreeException("logic error: opponent win")
   }
 
   private def assessBlock = block match {
-    case Some(y) if y == player =>
-      s"Block by player=$player given prior=$maybePrior chosen ${board.render} ($board) with " !! 6
+    case Some(y) if y == player => s"Block by" + messageString !! 6
     case None => assessFork(oppHasCenter, weHaveOppositeCorner)
     case Some(_) => throw DecisionTreeException("logic error: opponent block")
   }
 
   private def assessFork(centerOpp: Boolean, ourOppCorner: Boolean) = fork match {
-    case Some(x) if x == player =>
-      s"fork by player=$player given prior=$maybePrior chosen ${board.render} ($board) with " !! 5
+    case Some(x) if x == player => s"fork by" + messageString !! 5
     case _ => assessPotentialWin(centerOpp, ourOppCorner)
     //    case Some(_) => throw DecisionTreeException("Logic error: opponent fork")
   }
 
   private def assessPotentialWin(centerOpp: Boolean, ourOppCorner: Boolean) = potentialWin match {
-    case Some(x) if x == player => s"potential win by player=$player given prior=$maybePrior chosen ${board.render} ($board) with " !! 4
+    case Some(x) if x == player => s"potential win by" + messageString !! 4
     case _ => assessTactics(centerOpp, ourOppCorner)
     //    case Some(_) => throw DecisionTreeException("Logic error: opponent potential win")
   }
 
   private def assessTactics(centerOpp: Boolean, ourOppCorner: Boolean) = {
-    val message = s"tactical move by player=$player given prior=$maybePrior chosen ${board.render} ($board) with "
+    val tacticalMove = "tactical move: "
     if (corner && centerOpp && ourOppCorner)
-      message + " corner/centerOpp/ourOpp" !! 4
+      tacticalMove + "corner/centerOpp/ourOpp" + messageString !! 4
     // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
     // Nevertheless, we force the top-left corner.
     else if (firstAndTopLeftCorner)
-      message + " firstAndTopLeftCorner" !! 4
+      tacticalMove + "firstAndTopLeftCorner" + messageString !! 4
     else if (center)
-      message + " center" !! 3
+      tacticalMove + "center" + messageString !! 3
     else if (oppositeCorner(true))
-      message + " opposite corner" !! 2
+      tacticalMove + "opposite corner" + messageString !! 2
     else if (corner)
-      message + " corner" !! 1
+      tacticalMove + "corner" + messageString !! 1
     else
-      s"default player=$player given prior=$maybePrior defaulted to $board with " !! 0
+      tacticalMove + "default" + messageString !! 0
   }
 
   private lazy val center = currentMove.center
@@ -457,6 +457,8 @@ object TicTacToe {
  *              NOTE: that the low 14 bits of this value should always be zero.
  */
 case class Board(value: Int) extends AnyVal {
+  def isEmpty: Boolean = value == 0
+
   def row(i: Int): Row = TicTacToeOps.row(value, i)
 
   def ^(b: Board): Board = Board(value ^ b.value)
