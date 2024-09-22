@@ -34,30 +34,52 @@ public class TicTacToeOps {
 //    }
 
     /**
+     * Method to yield the number of vacant (or open) cells.
+     * <p>
+     * NOTE: like <code>open</code>, this method invokes findEmptyCells.
+     * You should only invoke this method if all you want is the number of vacancies.
+     *
+     * @param z a Board value.
+     * @return the number of vacancies.
+     */
+    public static int vacancies(final int z) {
+        // CONSIDER is there a more efficient way to count the bits?
+        return findEmptyCells(z).count();
+    }
+
+    /**
      * Method to yield an array of the vacant (or open) cells.
      * The sequence of the resulting array is top-left (index 0), top-middle, top-right, mid-left, mid-middle, etc.
      * up to bottom-right (index 8).
      *
-     * @param z a Board.
+     * @param z a Board value.
      * @return an array of index (int) elements, each of which represents a vacant space.
+     * The length of the result is the number of vacancies.
      */
     public static int[] open(final int z) {
-        // CONSIDER is there a more efficient way to count the bits?
-        int[] empty = new int[9];
+        Result emptyCells = findEmptyCells(z);
+        int[] result = new int[emptyCells.count()];
+        System.arraycopy(emptyCells.empties(), 0, result, 0, emptyCells.count());
+        return result;
+    }
+
+    private static Result findEmptyCells(int z) {
+        int[] empties = new int[9];
         int count = 0;
         int x = z;
         for (int i = 0; i < 9; i++) {
             int y = x & 0xC0000000;
-            if (y == 0xC0000000 || y == 0x00000000) empty[count++] = i;
+            if (y == 0xC0000000 || y == 0x00000000) empties[count++] = i;
             x = x << 2;
         }
-        int[] result = new int[count];
-        System.arraycopy(empty, 0, result, 0, count);
-        return result;
+        return new Result(empties, count);
+    }
+
+    private record Result(int[] empties, int count) {
     }
 
     /**
-     * Method to render a Board as three lines of X, 0, and . separated by newlines.
+     * Method to render a Board as three lines of X, 0, and '.' separated by newlines.
      *
      * @param z a Board.
      * @return a String, which ends in a newline.
@@ -180,7 +202,7 @@ public class TicTacToeOps {
     }
 
     /**
-     * Method to detect a line (i.e. three in a row, column, or diagonal).
+     * Method to detect a line (i.e., three in a row, column, or diagonal).
      *
      * @param x the bits of a Row (not a Board).
      * @return 0 if no line, 1 if X has a line, 2 if 0 has a line.

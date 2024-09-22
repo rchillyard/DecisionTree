@@ -101,12 +101,12 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
     case Some(x) => x.history :+ render(true) // XXX true makes the history easier to read.
   }
 
-//  /**
-//   * toString method for debugging: give the current board as a Hex String.
-//   *
-//   * @return a String of hexadecimal characters of length 8.
-//   */
-//  override def toString: String = render()
+  /**
+   * The count of open cells for this TicTacToe. If you need the actual open cells as well as the count, use <code>open</code> instead.
+   *
+   * @return the number of vacancies.
+   */
+  lazy val vacancies: Int = TicTacToeOps.vacancies(board.value)
 
   /**
    * The list of open cells for this TicTacToe.
@@ -293,7 +293,7 @@ object TicTacToe {
     /**
      * a significant sequence value that distinguishes this state from others and which can be derived from a P.
      *
-     * @param p parameter from which we may derive the sequence.
+     * @param s parameter from which we may derive the sequence.
      */
     def sequence(s: TicTacToe): Int = s.board.sequence
 
