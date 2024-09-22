@@ -1,5 +1,7 @@
 package com.phasmidsoftware.decisiontree.moves
 
+import com.phasmidsoftware.decisiontree.moves.Evaluator.{flog, wEvaluate}
+import com.phasmidsoftware.flog.Flog
 import com.phasmidsoftware.util.{DecisionTreeException, PriorityQueue}
 
 import scala.annotation.tailrec
@@ -67,6 +69,8 @@ abstract class Evaluator_State[P, S](implicit pSs: State[P, S]) extends Evaluato
  */
 class Evaluator_PQ[P, S](training: Boolean = false)(implicit pSs: State[P, S]) extends Evaluator_State[P, S] {
 
+  import flog._
+
   /**
    * Evaluate a two-person game, starting with state based on s.
    *
@@ -79,10 +83,11 @@ class Evaluator_PQ[P, S](training: Boolean = false)(implicit pSs: State[P, S]) e
     def inner(qp: PriorityQueue[S]): Option[S] = qp.delOption match {
       case None => throw DecisionTreeException("Empty queue")
       case Some((q, s)) =>
-        isGoal(s) match {
+        isGoal(wEvaluate !? s) match {
           case Some(true) if pSs.isWin(s) =>
-            Some(s) // a goal state.
+            "Goal" !! Some(s)
           case Some(false) if !training =>
+            flog.logger.info("Draw")
             None // it's impossible to reach a goal, i.e. a draw.
           case _ =>
             inner(q.insertElements(states(s))) // only valid states are inserted into the queue.
@@ -90,6 +95,13 @@ class Evaluator_PQ[P, S](training: Boolean = false)(implicit pSs: State[P, S]) e
       case _ => None // s is not valid: must have no vacant spaces.
     }
 
-      inner(PriorityQueue.maxPQ(s))
-    }
+    inner(PriorityQueue.maxPQ(s))
+  }
+}
+
+object Evaluator {
+
+  val flog: Flog = Flog[Evaluator.type]
+
+  val wEvaluate: String = "Next element to evaluate from priority queue: "
 }

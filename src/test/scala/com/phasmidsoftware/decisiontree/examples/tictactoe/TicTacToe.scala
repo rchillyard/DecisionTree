@@ -163,45 +163,45 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private lazy val heuristic: Double = if (board.isEmpty) 0
   else win match {
-    case Some(x) if x == player => s"Win:" + messageString !! 7
+    case Some(x) if x == player => s"Win:" + messageString !? 7
     case None => assessBlock
     case Some(_) => throw DecisionTreeException("logic error: opponent win")
   }
 
   private lazy val assessBlock: Double = block match {
-    case Some(y) if y == player => s"Block by" + messageString !! 6
+    case Some(y) if y == player => s"Block by" + messageString !? 6
     case None => assessFork
     case Some(_) => throw DecisionTreeException("logic error: opponent block")
   }
 
   private lazy val assessFork: Double = fork match {
-    case Some(x) if x == player => s"Fork by" + messageString !! 5
+    case Some(x) if x == player => s"Fork by" + messageString !? 5
     case _ => assessStrategy
     //    case Some(_) => throw DecisionTreeException("Logic error: opponent fork")
   }
 
   private lazy val assessStrategy: Double =
     if (corner && oppHasCenter && weHaveOppositeCorner)
-      "Strategic move: corner/centerOpp/ourOpp" + messageString !! 4.5
+      "Strategic move: corner/centerOpp/ourOpp" + messageString !? 4.5
     else assessPotentialWin
 
   private lazy val assessPotentialWin = potentialWin match {
-    case Some(x) if x == player => s"Potential win by" + messageString !! 4
+    case Some(x) if x == player => s"Potential win by" + messageString !? 4
     case _ => assessTactics
   }
 
   private lazy val assessTactics = {
     val tacticalMove = "Tactical move: "
     if (firstAndTopLeftCorner)
-      tacticalMove + "firstAndTopLeftCorner" + messageString !! 4
+      tacticalMove + "firstAndTopLeftCorner" + messageString !? 4
     else if (center)
-      tacticalMove + "center" + messageString !! 3
+      tacticalMove + "center" + messageString !? 3
     else if (oppositeCorner(true))
-      tacticalMove + "opposite corner" + messageString !! 2
+      tacticalMove + "opposite corner" + messageString !? 2
     else if (corner)
-      tacticalMove + "corner" + messageString !! 1
+      tacticalMove + "corner" + messageString !? 1
     else
-      tacticalMove + "default" + messageString !! 0
+      tacticalMove + "default" + messageString !? 0
   }
 
   private lazy val center = currentMove.center
@@ -476,7 +476,7 @@ case class Board(sequence: Int, value: Int) {
 
   def |(b: Board): Board = Board(b.sequence, value | b.value)
 
-  override def toString: String = render // TODO revert to the following: s"$sequence: value.toHexString"
+  override def toString: String = s"$sequence: ${value.toHexString}"
 
   def render: String = s"$sequence: ${TicTacToeOps.render(value)}"
 
