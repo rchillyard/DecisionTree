@@ -18,7 +18,7 @@ trait State[P, S] extends Ordering[S] {
    *
    * @param p parameter from which we may derive the sequence.
    */
-  def sequence(p: P): Int
+  def sequence(s: S): Int
 
   /**
    * Abstract method to construct an S from a P and an S.
@@ -92,7 +92,10 @@ trait State[P, S] extends Ordering[S] {
    * @param s2 second S.
    * @return <0 if s1 < s2, >0 if s1 > s2, else 0.
    */
-  def compare(s1: S, s2: S): Int = heuristic(s1).compare(heuristic(s2))
+  def compare(s1: S, s2: S): Int = sequence(s1).compare(sequence(s2)) match {
+    case 0 => heuristic(s1).compare(heuristic(s2))
+    case cf => cf
+  }
 
   /**
    * Method to render a State as a String.

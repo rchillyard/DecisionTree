@@ -163,36 +163,36 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   private lazy val heuristic: Double = if (board.isEmpty) 0
   else win match {
-    case Some(x) if x == player => s"win:" + messageString !! 7
+    case Some(x) if x == player => s"Win:" + messageString !! 7
     case None => assessBlock
     case Some(_) => throw DecisionTreeException("logic error: opponent win")
   }
 
-  private def assessBlock = block match {
+  private lazy val assessBlock: Double = block match {
     case Some(y) if y == player => s"Block by" + messageString !! 6
-    case None => assessFork(oppHasCenter, weHaveOppositeCorner)
+    case None => assessFork
     case Some(_) => throw DecisionTreeException("logic error: opponent block")
   }
 
-  private def assessFork(centerOpp: Boolean, ourOppCorner: Boolean) = fork match {
-    case Some(x) if x == player => s"fork by" + messageString !! 5
-    case _ => assessPotentialWin(centerOpp, ourOppCorner)
+  private lazy val assessFork: Double = fork match {
+    case Some(x) if x == player => s"Fork by" + messageString !! 5
+    case _ => assessStrategy
     //    case Some(_) => throw DecisionTreeException("Logic error: opponent fork")
   }
 
-  private def assessPotentialWin(centerOpp: Boolean, ourOppCorner: Boolean) = potentialWin match {
-    case Some(x) if x == player => s"potential win by" + messageString !! 4
-    case _ => assessTactics(centerOpp, ourOppCorner)
-    //    case Some(_) => throw DecisionTreeException("Logic error: opponent potential win")
+  private lazy val assessStrategy: Double =
+    if (corner && oppHasCenter && weHaveOppositeCorner)
+      "Strategic move: corner/centerOpp/ourOpp" + messageString !! 4.5
+    else assessPotentialWin
+
+  private lazy val assessPotentialWin = potentialWin match {
+    case Some(x) if x == player => s"Potential win by" + messageString !! 4
+    case _ => assessTactics
   }
 
-  private def assessTactics(centerOpp: Boolean, ourOppCorner: Boolean) = {
-    val tacticalMove = "tactical move: "
-    if (corner && centerOpp && ourOppCorner)
-      tacticalMove + "corner/centerOpp/ourOpp" + messageString !! 4
-    // NOTE: In theory, it doesn't matter whether the first X goes in the center or a top-left corner.
-    // Nevertheless, we force the top-left corner.
-    else if (firstAndTopLeftCorner)
+  private lazy val assessTactics = {
+    val tacticalMove = "Tactical move: "
+    if (firstAndTopLeftCorner)
       tacticalMove + "firstAndTopLeftCorner" + messageString !! 4
     else if (center)
       tacticalMove + "center" + messageString !! 3
@@ -232,9 +232,9 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
 
   lazy val corner: Boolean = currentMove.corner
 
-  def oppHasCenter: Boolean = maybePrior exists (_.center)
+  lazy val oppHasCenter: Boolean = maybePrior exists (_.center)
 
-  def weHaveOppositeCorner: Boolean = maybePrior flatMap (_.maybePrior) exists (_.oppositeCorner(!player))
+  lazy val weHaveOppositeCorner: Boolean = maybePrior flatMap (_.maybePrior) exists (_.oppositeCorner(!player))
 
   private lazy val firstAndTopLeftCorner = board.value == 0x40000000
 
@@ -295,7 +295,7 @@ object TicTacToe {
      *
      * @param p parameter from which we may derive the sequence.
      */
-    def sequence(p: Board): Int = p.sequence
+    def sequence(s: TicTacToe): Int = s.board.sequence
 
     /**
      * Method to construct an S from a proto-state:

@@ -27,6 +27,11 @@ class EvaluatorSpec extends AnyFlatSpec with should.Matchers {
     bTs.isGoal(s) shouldBe None // Should be a draw.
   }
 
+  it should "compare" in {
+    val t: TicTacToe = bTs.construct(Board(1, 0x800000) -> TicTacToe())
+    bTs.compare(t, t) shouldBe 0
+  }
+
   it should "getStates" in {
     val start: TicTacToe = TicTacToe()
     val ts: Seq[TicTacToe] = bTs.getStates(start)
