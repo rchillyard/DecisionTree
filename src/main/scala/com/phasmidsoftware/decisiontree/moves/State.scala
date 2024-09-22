@@ -12,6 +12,14 @@ package com.phasmidsoftware.decisiontree.moves
  * @tparam S the underlying type on which the state is based.
  */
 trait State[P, S] extends Ordering[S] {
+
+  /**
+   * a significant sequence value that distinguishes this state from others and which can be derived from a P.
+   *
+   * @param p parameter from which we may derive the sequence.
+   */
+  def sequence(p: P): Int
+
   /**
    * Abstract method to construct an S from a P and an S.
    *

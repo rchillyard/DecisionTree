@@ -169,8 +169,8 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     it should "play true, 1, 1" in {
         val t0 = startingPosition
         val (b1: Board, t: TicTacToe) = t0.play(xOrO = true)(0, 0)
-        b1 shouldBe Board(0x40000000)
-        t shouldBe t0
+        b1 shouldBe Board(1, 0x40000000)
+      t shouldBe t0
     }
 
     it should "playX 0, 0 and play0 1, 0" in {
@@ -185,14 +185,20 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "parse" in {
-        val target = TicTacToe.parse("         ")
-        target should matchPattern { case Success(TicTacToe.start) => }
-        val ty1 = TicTacToe.parse("X        ")
-        ty1 should matchPattern { case Success(_) => }
-        ty1.get shouldBe TicTacToe(startingPosition.playX(0, 0))
-        val ty2 = TicTacToe.parse("X  0     ")
-        ty2 should matchPattern { case Success(_) => }
-        //        ty2.get shouldBe startingPosition.playX(0, 0).play0(1, 0)
+      val target = TicTacToe.parse("         ")
+      target should matchPattern { case Success(TicTacToe.start) => }
+      val start = target.get
+      start shouldBe TicTacToe(Board(0, 0), 0)
+      val topLeftCorner = start.playX(1, 0)
+      println(topLeftCorner)
+      val ty1 = TicTacToe.parse("X        ")
+      ty1 should matchPattern { case Success(_) => }
+      println(ty1)
+      //        ty1.get shouldBe TicTacToe(Board(1,0),0)
+      ty1.get shouldBe TicTacToe(startingPosition.playX(0, 0))
+      val ty2 = TicTacToe.parse("X  0     ")
+      ty2 should matchPattern { case Success(_) => }
+      //        ty2.get shouldBe startingPosition.playX(0, 0).play0(1, 0)
     }
 
     it should "not parse" in {
@@ -225,10 +231,10 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     }
 
     it should "potentialWin" in {
-        TicTacToe.from(0x44000000, None).potentialWin shouldBe Some(true)
-        TicTacToe.from(0x40040000, None).potentialWin shouldBe Some(true)
-        TicTacToe.from(0x40400000, None).potentialWin shouldBe Some(true)
-        TicTacToe.parse(".00     0").get.potentialWin shouldBe Some(false)
+      TicTacToe.from(2, 0x44000000, None).potentialWin shouldBe Some(true)
+      TicTacToe.from(2, 0x40040000, None).potentialWin shouldBe Some(true)
+      TicTacToe.from(2, 0x40400000, None).potentialWin shouldBe Some(true)
+      TicTacToe.parse(".00     0").get.potentialWin shouldBe Some(false)
     }
 
     it should "fork" in {
@@ -301,22 +307,22 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
 
     it should "maybeOpponentMove" in {
         val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
-        t.maybeOpponentMove shouldBe Some(Board(0x800000))
+      t.maybeOpponentMove shouldBe Some(Board(1, 0x800000))
     }
 
     it should "maybePreviousMove" in {
         val t: TicTacToe = TicTacToe(TicTacToe(TicTacToe.parse("X        ").get.play(xOrO = false)(1, 1)).play(xOrO = true)(2, 2))
-        t.maybePreviousMove shouldBe Some(Board(0x40000000))
+      t.maybePreviousMove shouldBe Some(Board(1, 0x40000000))
     }
 
     it should "heuristic for best game" in {
         val z = implicitly[State[Board, TicTacToe]]
         val (moveX0, _) = startingPosition.play(xOrO = true)(2, 2)
-        moveX0 shouldBe Board(0x4000)
-        z.heuristic(TicTacToe(moveX0)) shouldBe 1 // X corner
+      moveX0 shouldBe Board(1, 0x4000)
+      z.heuristic(TicTacToe(moveX0)) shouldBe 1 // X corner
         val (moveO0, _) = TicTacToe(moveX0).play(xOrO = false)(0, 0)
-        moveO0 shouldBe Board(0x80004000)
-        z.heuristic(TicTacToe(moveO0)) shouldBe 2 // 0 opposite corner
+      moveO0 shouldBe Board(2, 0x80004000)
+      z.heuristic(TicTacToe(moveO0)) shouldBe 2 // 0 opposite corner
         TicTacToe(moveO0).board
         z.heuristic(TicTacToe(TicTacToe.parse("0     X0.").get.play(xOrO = true)(2, 2))) shouldBe 2 // X opposite corner
         z.heuristic(TicTacToe(TicTacToe.parse("0X0   .  ").get.play(xOrO = true)(2, 0))) shouldBe 2 // X opposite corner
@@ -341,9 +347,9 @@ class TicTacToeSpec extends AnyFlatSpec with should.Matchers with PrivateMethodT
     it should "get best X play from start" in {
         val ss = bTs.getStates(TicTacToe.parse(".........").get)
         val (_, t) = PriorityQueue.maxPQ(ss).del
-        t shouldBe TicTacToe.parse("X........").get
-        t.board.render shouldBe "X..-...-...-"
-        bTs.heuristic(t) shouldBe 4
+      t shouldBe TicTacToe.parse("X........").get
+      t.board.render shouldBe "1: X..-...-...-"
+      bTs.heuristic(t) shouldBe 4
     }
 
     it should "get best 0 play from ....X...." in {

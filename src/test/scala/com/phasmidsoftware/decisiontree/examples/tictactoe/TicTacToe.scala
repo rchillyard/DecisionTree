@@ -78,7 +78,7 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
    * @param col  the column at which the mark should be made.
    * @return a new Board with the appropriate cell (i.e. square) marked.
    */
-  def play(xOrO: Boolean)(row: Int, col: Int): Prototype = board.play(xOrO, row, col) -> this
+  def play(xOrO: Boolean)(row: Int, col: Int): Prototype = board.play(board.sequence + 1, xOrO, row, col) -> this
 
   /**
    * Method to create a string of Xs and 0s corresponding to this TicTacToe position.
@@ -291,6 +291,13 @@ object TicTacToe {
   trait TicTacToeState$ extends State[Board, TicTacToe] {
 
     /**
+     * a significant sequence value that distinguishes this state from others and which can be derived from a P.
+     *
+     * @param p parameter from which we may derive the sequence.
+     */
+    def sequence(p: Board): Int = p.sequence
+
+    /**
      * Method to construct an S from a proto-state:
      *
      * @param proto a (Board, TicTacToe) tuple.
@@ -313,10 +320,6 @@ object TicTacToe {
      * @return the number of our aligned cells - their aligned cells.
      */
     def heuristic(s: TicTacToe): Double = s.heuristic
-    //    {
-    //      import flog._
-    //      s"Heuristic for $s" !! s.heuristic
-    //    }
 
     /**
      * Method to determine if s is a winning state.
@@ -381,7 +384,7 @@ object TicTacToe {
    *
    * @return a TicTacToe with all empty cells, no predecessor and an empty Priority Queue.
    */
-  def apply(): TicTacToe = apply(Board(0))
+  def apply(): TicTacToe = apply(Board(0, 0))
 
   /**
    * Apply method mostly for testing.
@@ -392,7 +395,7 @@ object TicTacToe {
    * @param mask  a mask which defines the bits to be eliminated from board to yield the previous Board.
    * @return a TicTacToe.
    */
-  def apply(board: Board, mask: Int): TicTacToe = TicTacToe(board, Some(previous(board.value, mask)))
+  def apply(board: Board, mask: Int): TicTacToe = TicTacToe(board, Some(previous(board.sequence - 1, board.value, mask)))
 
   /**
    * Method to construct a TicTacToe with prior from a particular bit pattern and a mask.
@@ -401,7 +404,10 @@ object TicTacToe {
    * @param maybePriorBoard an optional bit pattern to yield the prior state.
    * @return a TicTacToe with all empty cells.
    */
-  def from(x: Int, maybePriorBoard: Option[Int]): TicTacToe = TicTacToe(Board(x), maybePriorBoard.map(previous(x, _)))
+  def from(sequence: Row, x: Row, maybePriorBoard: Option[Board]): TicTacToe = TicTacToe(
+    Board(sequence, x),
+    maybePriorBoard.map((board: Board) => previous(board.sequence - 1, x, board.value))
+  )
 
   /**
    * Method to parse a pattern for a starting position.
@@ -418,7 +424,8 @@ object TicTacToe {
       case '0' | 'o' | 'O' => 2
       case x => throw DecisionTreeException(s"TicTacToe: illegal character: $x")
     }
-    if (cells.length >= 9) TicTacToe.from(TicTacToeOps.parseArray(cells.toArray), maybeMask)
+    val sequence = s.replace(" ", "").replace(".", "").length
+    if (cells.length >= 9) TicTacToe.from(sequence, TicTacToeOps.parseArray(cells.toArray), maybeMask map (Board(sequence, _)))
     else throw DecisionTreeException("insufficient elements")
   }
 
@@ -439,7 +446,7 @@ object TicTacToe {
   // XXX the starting position (all nine empty cells).
   val start: TicTacToe = apply()
 
-  private def previous(value: Int, mask: Int): TicTacToe = TicTacToe(Board(value ^ mask))
+  private def previous(sequence: Int, value: Int, mask: Int) = TicTacToe(Board(sequence, value ^ mask))
 
   private def row(board: Board)(i: Int): Row = board.row(i)
 
@@ -453,31 +460,33 @@ object TicTacToe {
 /**
  * This class represents 9 x 2 bits, at the high end of the 32-bit word.
  *
+ * NOTE: this used to extend AnyVal before we added the sequence parameter.
+ *
  * @param value the bit value of this board.
  *              NOTE: that the low 14 bits of this value should always be zero.
  */
-case class Board(value: Int) extends AnyVal {
+case class Board(sequence: Int, value: Int) {
   def isEmpty: Boolean = value == 0
 
   def row(i: Int): Row = TicTacToeOps.row(value, i)
 
-  def ^(b: Board): Board = Board(value ^ b.value)
+  def ^(b: Board): Board = Board(b.sequence, value ^ b.value) // XXX could use copy
 
-  def &(b: Board): Board = Board(value & b.value)
+  def &(b: Board): Board = Board(b.sequence, value & b.value)
 
-  def |(b: Board): Board = Board(value | b.value)
+  def |(b: Board): Board = Board(b.sequence, value | b.value)
 
-  override def toString: String = value.toHexString
+  override def toString: String = render // TODO revert to the following: s"$sequence: value.toHexString"
 
-  def render: String = TicTacToeOps.render(value)
+  def render: String = s"$sequence: ${TicTacToeOps.render(value)}"
 
-  def play(xOrO: Boolean, row: Int, col: Int): Board = Board(playBoard(value, xOrO, row, col))
+  def play(sequence: Int, xOrO: Boolean, row: Row, col: Row): Board = Board(sequence, playBoard(value, xOrO, row, col))
 
-  def transpose: Board = Board(transposeBoard(value))
+  def transpose: Board = Board(sequence, transposeBoard(value))
 
-  def rotate: Board = Board(rotateBoard(value))
+  def rotate: Board = Board(sequence, rotateBoard(value))
 
-  def exchange: Board = Board(exchangeBoard(value))
+  def exchange: Board = Board(sequence, exchangeBoard(value))
 
   def corner: Boolean = (value & 0xCC0CC000) != 0
 
