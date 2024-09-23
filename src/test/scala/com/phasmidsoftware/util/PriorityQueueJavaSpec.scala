@@ -76,6 +76,8 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 
 	behavior of "iterator"
 
+	// NOTE that the iterator on a PriorityQueue is, necessarily, destructive.
+
 	it should "work for empty" in {
 		val target = new PriorityQueueJava[Int]()
 		val iterator = target.iterator()
@@ -86,6 +88,7 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 	it should "work for one element" in {
 		val target = new PriorityQueueJava[Int]()
 		val result: PriorityQueueJava[Int] = target.insert(1)
+		result.size() shouldBe 1
 		val iterator = result.iterator()
 		iterator.hasNext shouldBe true
 		iterator.next() shouldBe 1
@@ -96,6 +99,7 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 	it should "work for two elements" in {
 		val target = new PriorityQueueJava[Int]()
 		val result: PriorityQueueJava[Int] = target.insert(1).insert(2)
+		result.size() shouldBe 2
 		val iterator = result.iterator()
 		iterator.hasNext shouldBe true
 		iterator.next() shouldBe 1
@@ -108,6 +112,7 @@ class PriorityQueueJavaSpec extends flatspec.AnyFlatSpec with matchers.should.Ma
 	it should "work for three elements" in {
 		val target = new PriorityQueueJava[Int]()
 		val result: PriorityQueueJava[Int] = target.insert(1).insert(2).insert(0)
+		result.size() shouldBe 3
 		val iterator = result.iterator()
 		iterator.hasNext shouldBe true
 		iterator.next() shouldBe 0

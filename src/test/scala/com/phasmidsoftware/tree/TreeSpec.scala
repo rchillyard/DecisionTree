@@ -97,7 +97,7 @@ class TreeSpec extends flatspec.AnyFlatSpec with should.Matchers {
     target.postOrder(x => x % 2 == 0) shouldBe Queue.empty
   }
   // FIXME why does this test not work? The tree builds OK but the postOrder never completes.
-  ignore should "work for a very deep tree" in {
+  it should "work for a very deep tree" in {
     val n = 1000000
     val target: Tree[Int] = LazyList.from(1).take(n).foldLeft(Tree(0))((t, x) => Tree(x, Seq(t)))
     val postOrder = target.postOrder()

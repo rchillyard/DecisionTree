@@ -5,3 +5,5 @@
 /target/
 /.bsp/
 /project/project/
+
+logs/archived/

@@ -276,7 +276,7 @@ object Tree {
 
   private def bfsPriorityQueue[T: Ordering](p: T => Boolean, n: Node[T]): PriorityQueue[Node[T]] = {
     implicit val y: Ordering[Node[T]] = (x: Node[T], y: Node[T]) => implicitly[Ordering[T]].compare(x.key, y.key)
-    bfsPQ(PriorityQueue.minPQ[Node[T]], p)(PriorityQueue.minPQ(n))
+    bfsPQ(PriorityQueue.apply[Node[T]], p)(PriorityQueue.apply(n))
   }
 
   @tailrec
@@ -293,10 +293,10 @@ object Tree {
   private final def bfsPQ[T, V](visitor: V, p: T => Boolean)(queue: PriorityQueue[Node[T]])(implicit tVv: Visitor[Node[T], V]): V =
     queue.delOption match {
       case None => visitor
-      case Some((q, tn)) =>
-        if (tn.filter(p))
-          bfsPQ(tVv.visit(visitor, tn), p)(tn.children.foldLeft(q)(_.insert(_)))
-        else bfsPQ(visitor, p)(q)
+      case Some((q, tn)) if tn.filter(p) =>
+        bfsPQ(tVv.visit(visitor, tn), p)(tn.children.foldLeft(q)(_.insert(_)))
+      case
+        Some((q, _)) => bfsPQ(visitor, p)(q)
     }
 
   private val always: Any => Boolean = _ => true

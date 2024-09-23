@@ -4,12 +4,12 @@ package com.phasmidsoftware.decisiontree.examples.tictactoe;
 public class TicTacToeOps {
 
     /**
-     * Parse and array of ints, each one either 0 (open), 1 (X), or 2 (0).
+     * Parse an array of ints, each one either 0 (open), 1 (X), or 2 (0).
      *
      * @param a an array of 9 ints.
      * @return the encoding of the board.
      */
-    public static int parse(int[] a) {
+    public static int parseArray(int[] a) {
         int result = 0;
         for (int i = 0; i < 9; i++) result = result << 2 | a[i];
         return result << 14;
@@ -34,30 +34,52 @@ public class TicTacToeOps {
 //    }
 
     /**
+     * Method to yield the number of vacant (or open) cells.
+     * <p>
+     * NOTE: like <code>open</code>, this method invokes findEmptyCells.
+     * You should only invoke this method if all you want is the number of vacancies.
+     *
+     * @param z a Board value.
+     * @return the number of vacancies.
+     */
+    public static int vacancies(final int z) {
+        // CONSIDER is there a more efficient way to count the bits?
+        return findEmptyCells(z).count();
+    }
+
+    /**
      * Method to yield an array of the vacant (or open) cells.
      * The sequence of the resulting array is top-left (index 0), top-middle, top-right, mid-left, mid-middle, etc.
      * up to bottom-right (index 8).
      *
-     * @param z a Board.
+     * @param z a Board value.
      * @return an array of index (int) elements, each of which represents a vacant space.
+     * The length of the result is the number of vacancies.
      */
     public static int[] open(final int z) {
-        // CONSIDER is there a more efficient way to count the bits?
-        int[] empty = new int[9];
+        Result emptyCells = findEmptyCells(z);
+        int[] result = new int[emptyCells.count()];
+        System.arraycopy(emptyCells.empties(), 0, result, 0, emptyCells.count());
+        return result;
+    }
+
+    private static Result findEmptyCells(int z) {
+        int[] empties = new int[9];
         int count = 0;
         int x = z;
         for (int i = 0; i < 9; i++) {
             int y = x & 0xC0000000;
-            if (y == 0xC0000000 || y == 0x00000000) empty[count++] = i;
+            if (y == 0xC0000000 || y == 0x00000000) empties[count++] = i;
             x = x << 2;
         }
-        int[] result = new int[count];
-        System.arraycopy(empty, 0, result, 0, count);
-        return result;
+        return new Result(empties, count);
+    }
+
+    private record Result(int[] empties, int count) {
     }
 
     /**
-     * Method to render a Board as three lines of X, 0, and . separated by newlines.
+     * Method to render a Board as three lines of X, 0, and '.' separated by newlines.
      *
      * @param z a Board.
      * @return a String, which ends in a newline.
@@ -71,9 +93,19 @@ public class TicTacToeOps {
                 sb.append(y == 1 ? 'X' : y == 2 ? '0' : '.');
                 x = x << 2;
             }
-            sb.append('\n');
+            sb.append('-');
         }
         return sb.toString();
+    }
+
+    /**
+     * Method to render a Board as three lines of X, 0, and . separated by newlines.
+     *
+     * @param z a Board.
+     * @return a String, which ends in a newline.
+     */
+    public static String renderWithNewlines(final int z) {
+        return render(z).replaceAll("-", "\n");
     }
 
     /**
@@ -85,20 +117,39 @@ public class TicTacToeOps {
      * @param j      the column index.
      * @return the bits of x OR'd with a bit representing the play.
      */
-    public static int play(int x, boolean player, int i, int j) {
+    public static int playBoard(int x, boolean player, int i, int j) {
         return x | (player ? 1 : 2) << (62 - i * 6 - j * 2);
     }
 
     /**
      * Method to transpose a board.
-     * This operation is a hFlip followed by a rotate.
+     * This operation is a hFlip followed by invocation of rotateBoard.
      * We use this method when we need a column.
      *
      * @param x the bits of a Board.
      * @return a Board which is the transpose of x.
      */
     public static int transposeBoard(int x) {
-        return rotate(hFlip(x));
+        return rotateBoard(hFlip(x));
+    }
+
+    /**
+     * Method to exchange the X/O bits of the given board (x).
+     *
+     * @param x the bits of a Board.
+     * @return the bits of a Board with Xs swapped for Os.
+     */
+    public static int exchangeBoard(int x) {
+        int z = 0;
+        for (int i = 0; i < 9; i++) {
+            z = z >> 2;
+            int y = x & 0xC000;
+            if (y == 0x4000) z |= 0x80000;
+            else if (y == 0x8000) z |= 0x40000;
+            x = x >> 2;
+        }
+        z = z << 12;
+        return z;
     }
 
     /**
@@ -113,13 +164,13 @@ public class TicTacToeOps {
     }
 
     /**
-     * Perform a 90 degree (clockwise) rotation about a the center cell.
+     * Perform a 90 degree (clockwise) rotation about the center cell.
      * This transforms, for example, R0 into R1 or L0 into L1.
      *
      * @param x the bit pattern to be rotated.
      * @return the rotated bit pattern.
      */
-    public static int rotate(int x) {
+    public static int rotateBoard(int x) {
         long y = (long) x & 0x00000000FFFFFFFFL;
         long z = flip(y, 0, 2) | flip(y, 1, 4) | flip(y, 2, 6) | flip(y, 3, -2) | flip(y, 4, 0) | flip(y, 5, 2) | flip(y, 6, -6) | flip(y, 7, -4) | flip(y, 8, -2);
         return (int) (z >> 32);
@@ -130,6 +181,7 @@ public class TicTacToeOps {
      * NOTE: to yield a column, we first transpose the board and then get a row.
      *
      * @param x the bits of a Board.
+     * @param i the row required.
      * @return a Row.
      */
     public static int row(int x, int i) {
@@ -150,7 +202,7 @@ public class TicTacToeOps {
     }
 
     /**
-     * Method to detect a line (i.e. three in a row, column, or diagonal).
+     * Method to detect a line (i.e., three in a row, column, or diagonal).
      *
      * @param x the bits of a Row (not a Board).
      * @return 0 if no line, 1 if X has a line, 2 if 0 has a line.
@@ -169,11 +221,13 @@ public class TicTacToeOps {
      * @return 0 if no line pending, 1 if X has two cells, 2 if 0 has two cells.
      */
     public static int rowLinePending(int x) {
+        // CONSIDER restoring this once CircleCI is OK with it.
 //        return switch (x) {
 //            case 0x11, 0x14, 0x05 -> 1; // X.X XX. .XX
 //            case 0x22, 0x28, 0x0A -> 2; // 0.0 00. .00
 //            default -> 0;
 //        };
+        //noinspection EnhancedSwitchMigration
         switch (x) {
             case 0x11:
             case 0x14:

@@ -6,7 +6,7 @@ package com.phasmidsoftware.decisiontree
 
 import org.scalatest.{BeforeAndAfterEach, flatspec}
 
-private class ExpandableSpec extends flatspec.AnyFlatSpec with BeforeAndAfterEach {
+class ExpandableSpec extends flatspec.AnyFlatSpec with BeforeAndAfterEach {
 
   behavior of "ExpandableSpec"
 
