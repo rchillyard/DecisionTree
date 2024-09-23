@@ -33,19 +33,21 @@ public class TicTacToeOps {
 //        return result;
 //    }
 
-    /**
-     * Method to yield the number of vacant (or open) cells.
-     * <p>
-     * NOTE: like <code>open</code>, this method invokes findEmptyCells.
-     * You should only invoke this method if all you want is the number of vacancies.
-     *
-     * @param z a Board value.
-     * @return the number of vacancies.
-     */
-    public static int vacancies(final int z) {
-        // CONSIDER is there a more efficient way to count the bits?
-        return findEmptyCells(z).count();
-    }
+//    /**
+//     * Method to yield the number of vacant (or open) cells.
+//     * <p>
+//     * NOTE: like <code>open</code>, this method invokes findEmptyCells.
+//     * You should only invoke this method if all you want is the number of vacancies.
+//     *
+//     * TESTME
+//     *
+//     * @param z a Board value.
+//     * @return the number of vacancies.
+//     */
+//    public static int vacancies(final int z) {
+//        // CONSIDER is there a more efficient way to count the bits?
+//        return findEmptyCells(z).count();
+//    }
 
     /**
      * Method to yield an array of the vacant (or open) cells.
@@ -57,26 +59,37 @@ public class TicTacToeOps {
      * The length of the result is the number of vacancies.
      */
     public static int[] open(final int z) {
-        Result emptyCells = findEmptyCells(z);
-        int[] result = new int[emptyCells.count()];
-        System.arraycopy(emptyCells.empties(), 0, result, 0, emptyCells.count());
-        return result;
-    }
-
-    private static Result findEmptyCells(int z) {
-        int[] empties = new int[9];
+        int[] empty = new int[9];
         int count = 0;
         int x = z;
         for (int i = 0; i < 9; i++) {
             int y = x & 0xC0000000;
-            if (y == 0xC0000000 || y == 0x00000000) empties[count++] = i;
+            if (y == 0xC0000000 || y == 0x00000000) empty[count++] = i;
             x = x << 2;
         }
-        return new Result(empties, count);
+        int[] result = new int[count];
+        System.arraycopy(empty, 0, result, 0, count);
+        return result;
+//        Result emptyCells = findEmptyCells(z);
+//        int[] result = new int[emptyCells.count()];
+//        System.arraycopy(emptyCells.empties(), 0, result, 0, emptyCells.count());
+//        return result;
     }
 
-    private record Result(int[] empties, int count) {
-    }
+//    private static Result findEmptyCells(int z) {
+//        int[] empties = new int[9];
+//        int count = 0;
+//        int x = z;
+//        for (int i = 0; i < 9; i++) {
+//            int y = x & 0xC0000000;
+//            if (y == 0xC0000000 || y == 0x00000000) empties[count++] = i;
+//            x = x << 2;
+//        }
+//        return new Result(empties, count);
+//    }
+//
+//    private record Result(int[] empties, int count) {
+//    }
 
     /**
      * Method to render a Board as three lines of X, 0, and '.' separated by newlines.

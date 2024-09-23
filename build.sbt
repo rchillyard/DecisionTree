@@ -10,6 +10,8 @@ val scalaTestVersion = "3.2.9"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 
+javacOptions ++= Seq("-source", "17", "-target", "17")
+
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 
 libraryDependencies ++= Seq(

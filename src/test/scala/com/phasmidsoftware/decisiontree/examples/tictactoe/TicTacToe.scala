@@ -101,12 +101,14 @@ case class TicTacToe(board: Board, maybePrior: Option[TicTacToe] = None) {
     case Some(x) => x.history :+ render(true) // XXX true makes the history easier to read.
   }
 
-  /**
-   * The count of open cells for this TicTacToe. If you need the actual open cells as well as the count, use <code>open</code> instead.
-   *
-   * @return the number of vacancies.
-   */
-  lazy val vacancies: Int = TicTacToeOps.vacancies(board.value)
+//  /**
+//   * The count of open cells for this TicTacToe. If you need the actual open cells as well as the count, use <code>open</code> instead.
+//   *
+//   * TESTME
+//   *
+//   * @return the number of vacancies.
+//   */
+//  lazy val vacancies: Int = TicTacToeOps.vacancies(board.value)
 
   /**
    * The list of open cells for this TicTacToe.
