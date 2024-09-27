@@ -260,6 +260,8 @@ sealed trait BackedOutput[A <: Appendable with AutoCloseable] extends TypedOutpu
  */
 sealed abstract class BufferedCharSequenceOutput[A <: Appendable with AutoCloseable with Flushable](val appendable: A, var indentation: CharSequence, val sb: mutable.StringBuilder = new StringBuilder) extends CharacterOutput with BufferedOutput with BackedOutput[A] {
 
+  val transform: CharSequence => CharSequence = identity
+
   /**
    * This method is essentially non-functional in the JVM.
    * It seemed like a good idea at the time!
@@ -278,8 +280,10 @@ sealed abstract class BufferedCharSequenceOutput[A <: Appendable with AutoClosea
     result
   }
 
-  def persist(x: CharSequence): Unit = if (isBacked) appendable.append(x)
-  else throw OutputException(s"Cannot persist to unbacked Output")
+  def persist(x: CharSequence): Unit = if (isBacked)
+    appendable.append(transform(x))
+  else
+    throw OutputException(s"Cannot persist to unbacked Output")
 
   var flushed = false
 
@@ -392,6 +396,37 @@ object Output {
    */
   def apply(s: CharSequence): Output = empty :+ s
 
+  def customWriter(w: Writer, initialIndent: CharSequence, stringBuilder: StringBuilder, transform: CharSequence => CharSequence): Output =
+    WriterOutput(w, initialIndentation = initialIndent, stringBuilder = stringBuilder, transform)
+
+  private def untabbed(tab: Int, line: String, sb: StringBuilder): String = {
+    // XXX yes, we are using var here.
+    var pos = 0
+    val tabs = line.split("\t").toSeq
+    sb.append(tabs.head)
+    pos += tabs.head.length
+    tabs.tail foreach {
+      w =>
+        val spaces: Int = calculateTabSpaces(tab)(pos)
+        sb.append(" " * spaces)
+        pos += spaces + w.length
+        sb.append(w)
+    }
+    sb.append("\n")
+    sb.toString()
+  }
+
+  def calculateTabSpaces(tab: Int)(pos: Int): Int = tab - (pos + tab) % tab
+
+  private def untab(s: CharSequence, tab: Int): CharSequence = {
+    val sb = new StringBuilder()
+    val lines = s.toString.split("\n")
+    lines foreach (line => untabbed(tab, line, sb))
+    sb.toString()
+  }
+
+  def untabbedWriter(w: Writer, tab: Int): Output = customWriter(w, "", new StringBuilder(), untab(_, tab))
+
   def foldLeft[X](xs: Iterable[X])(o: Output = empty)(f: (Output, X) => Output): Output = xs.foldLeft(o)(f)
 
   def reduce[X](xs: Iterable[X])(f: (Output, X) => Output): Output = foldLeft(xs)()(f)
@@ -453,7 +488,7 @@ case class UnbackedOutput(initialIndentation: CharSequence = "", stringBuilder: 
  * @param initialIndentation the initial value of indentation.
  * @param stringBuilder      the StringBuilder used for buffering characters.
  */
-case class WriterOutput(writer: Writer, initialIndentation: CharSequence = "", stringBuilder: mutable.StringBuilder = new StringBuilder) extends BufferedCharSequenceOutput[Writer](writer, initialIndentation, stringBuilder) {
+case class WriterOutput(writer: Writer, initialIndentation: CharSequence = "", stringBuilder: mutable.StringBuilder = new StringBuilder, override val transform: CharSequence => CharSequence = identity) extends BufferedCharSequenceOutput[Writer](writer, initialIndentation, stringBuilder) {
   def isBacked: Boolean = true
 
   override def toString: String =

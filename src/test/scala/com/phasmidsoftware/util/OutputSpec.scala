@@ -4,11 +4,11 @@
 
 package com.phasmidsoftware.util
 
-import java.io.Writer
-import org.scalatest.{flatspec, matchers}
-
+import com.phasmidsoftware.decisiontree.MockNode
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
+
+import java.io.Writer
 
 class OutputSpec extends flatspec.AnyFlatSpec with should.Matchers {
 
@@ -50,7 +50,7 @@ class OutputSpec extends flatspec.AnyFlatSpec with should.Matchers {
     val writer = MockWriter()
     val output = Output(writer) :+ "x"
     output match {
-      case w@WriterOutput(_, _, _) => w.sb.toString() shouldBe "x"
+      case w@WriterOutput(_, _, _, _) => w.sb.toString() shouldBe "x"
       case _ => fail("bad")
     }
   }
@@ -222,6 +222,58 @@ class OutputSpec extends flatspec.AnyFlatSpec with should.Matchers {
 
   }
 
+  behavior of "custom writer"
+
+  it should "work" in {
+    val target = MockNode(1)
+    val writer = MockWriter()
+    val output = Output.customWriter(writer, "", new StringBuilder(), c => c.formatted("Hello %s"))
+    target.output(output).close()
+    writer.spillway shouldBe "Hello 1"
+  }
+
+  behavior of "untabbed writer"
+
+  it should "work 1" in {
+    val writer = MockWriter()
+    val output: Output = Output.untabbedWriter(writer, 6)
+    val tabbedString = "Rank\tPair\tMPs\tPercent\tNames"
+    output :+ tabbedString
+    output.close()
+    val actual = writer.spillway
+    val expected = "Rank  Pair  MPs   Percent     Names\n"
+    actual shouldBe expected
+  }
+
+  it should "work 2" in {
+    val writer = MockWriter()
+    val output: Output = Output.untabbedWriter(writer, 6)
+    val tabbedString = "Rank\tPair\tMPs\tPrcnt\tNames"
+    output :+ tabbedString
+    output.close()
+    val actual = writer.spillway
+    val expected = "Rank  Pair  MPs   Prcnt Names\n"
+    actual shouldBe expected
+  }
+
+  behavior of "calculateTabSpaces"
+  it should "work for tab 8" in {
+    val spacer: Int => Int = Output.calculateTabSpaces(8)
+    spacer(4) shouldBe 4
+    spacer(1) shouldBe 7
+    spacer(0) shouldBe 8
+    spacer(8) shouldBe 8
+    spacer(12) shouldBe 4
+  }
+  it should "work for tab 6" in {
+    val spacer: Int => Int = Output.calculateTabSpaces(6)
+    spacer(4) shouldBe 2
+    spacer(1) shouldBe 5
+    spacer(0) shouldBe 6
+    spacer(6) shouldBe 6
+    spacer(10) shouldBe 2
+    spacer(25) shouldBe 5
+  }
 }
 
 case class MockWriter(n: Int = 4096, var isOpen: Boolean = true) extends Writer {
